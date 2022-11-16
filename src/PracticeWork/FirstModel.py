@@ -1,4 +1,8 @@
-from constants import *
+import sys 
+
+sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
+
+from Utilities.constants import *
 
 import glob
 import numpy as np
@@ -74,5 +78,3 @@ class PatientData(Dataset):
         return self.outcomes.codes
 
 
-
-    

@@ -43,19 +43,25 @@ class UNet(nn.Module):
         logits = self.outc(x)
         return logits
 
+def init_weights(m):
+    if isinstance(m, nn.Conv1d):
+        nn.init.xavier_normal_(m.weight.data)
+    
 
-wavs, tsvs, fs, names = get_wavs_and_tsvs("/Users/serenahuston/GitRepos/python-classifier-2022/physionet.org/files/circor-heart-sound/1.0.3/training_data",
-                                return_names=True)
+# wavs, tsvs, fs, names = get_wavs_and_tsvs("/Users/serenahuston/GitRepos/python-classifier-2022/physionet.org/files/circor-heart-sound/1.0.3/training_data",
+#                                 return_names=True)
 
 
-dp = DataPreprocessing(wavs[0], tsvs[0], names[0])
-in_patches = dp.extract_env_patches()
+# dp = DataPreprocessing(wavs[0], tsvs[0], fs[0], names[0])
+# in_patches = dp.extract_env_patches()
 
-model = UNet()
+# model = UNet()
 
-tensor = torch.from_numpy(in_patches[0]).type(torch.float32)
+# tensor = torch.from_numpy(in_patches[0]).type(torch.float32)
 
-out = model.forward(tensor)
+# out = model.forward(tensor)
 
-softmax = F.softmax(out, dim=1)
-print(softmax)
+# softmax = F.softmax(out, dim=1)
+# print(softmax)
+# _, yhat = torch.max(softmax, 0)
+# print(yhat)

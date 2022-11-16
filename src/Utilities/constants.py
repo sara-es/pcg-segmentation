@@ -4,6 +4,7 @@ from torch.utils.data import random_split
 
 AGES = {"Neonate" : 0.5, "Infant": 6, "Child" : 72, "Adolescent": 180, "Young Adult": 240}
 AUDIO_FILE_REGEX = "training_data/*.wav"
+SEGMENTATION_FILE_REGEX = "training_data/*.tsv"
 SEXES = {"Male" : 0, "Female": 1}
 LOCATIONS = ["AV", "PV", "TV", "MV"]
 MURMUR_PRESENCE = ["Present", "Absent", "Unknown"]

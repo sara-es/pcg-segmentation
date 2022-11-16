@@ -1,10 +1,12 @@
-from FirstModel import PatientData
-from constants import * 
+import sys 
+sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
+
+from Utilities.constants import * 
 import matplotlib.pyplot as plt
 import numpy as np
 import math 
 import wave
-import sys
+
 import seaborn as sn
 import pandas as pd
 
@@ -68,6 +70,37 @@ class DataPresentation:
                 fig.delaxes(axs[-1][-1])
         plt.savefig(DATA_PRESENTATION_PATH + str(patient_num) + "_audio_plots")
 
+    def plot_patient_audio_file_with_fhs_locs(self, patient_num, wav_file, fhs_locs):
+        fig, ax = plt.subplots()
+        fig.suptitle('Audio recordings for patient ' + str(patient_num), fontsize=self.title_size)
+        fig.set_size_inches(self.fig_width, self.fig_row_height)
+
+        spf = wave.open(wav_file, "r")
+        # Extract Raw Audio from Wav File
+        signal = spf.readframes(-1)
+        signal = np.frombuffer(signal, "int16")
+        fs = spf.getframerate()
+
+        # If Stereo
+        if spf.getnchannels() == 2:
+            print("Just mono files")
+            sys.exit(0)
+
+        time = np.linspace(0, len(signal) / fs, num=len(signal))
+
+        ax.set_title(wav_file, fontsize=self.subtitle_size)
+        ax.plot(time, signal, color=self.colour_scheme[0])
+        ax.vlines(fhs_locs, color=self.colour_scheme[2], ymin=-35000, ymax=35000)
+        ax.grid()
+        ax.set_ylabel("Amplitude", fontsize=self.ax_size)
+        ax.set_xlabel("Time (Seconds)", fontsize=self.ax_size)
+        ax.tick_params(axis='x', labelsize=self.ax_size)
+        ax.tick_params(axis='y', labelsize=self.ax_size)
+        ax.set_xlim(left=0, right=35)
+        ax.set_ylim(bottom=-35000, top=35000)
+        
+        plt.savefig(DATA_PRESENTATION_PATH + str(patient_num) + "_audio_plot_with_FHS")
+
     def plot_multi_bar_chart(self, x_labels, x_label_title, y_label_title, data, bar_labels, title):
         plt.title(title, fontsize=self.title_size)
         x_ticks = np.arange(len(x_labels))
@@ -122,3 +155,4 @@ class DataPresentation:
         ax1.grid()
         ax2.grid()
         plt.savefig(DATA_PRESENTATION_PATH + "Loss VS Accuracy")
+
