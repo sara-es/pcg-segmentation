@@ -10,7 +10,8 @@ LOCATIONS = ["AV", "PV", "TV", "MV"]
 MURMUR_PRESENCE = ["Present", "Absent", "Unknown"]
 OUTCOMES = ["Normal", "Abnormal"]
 NUM_FRAMES = 1000 
-TRAINING_DATA_PATH = "/Users/serenahuston/GitRepos/python-classifier-2022/physionet.org/files/circor-heart-sound/1.0.3/"
+DATA_PATH = "/Users/serenahuston/GitRepos/Data/"
+TRAINING_DATA_PATH_2022 = DATA_PATH + "PhysioNet_2022/"
 DATA_PRESENTATION_PATH = "/Users/serenahuston/GitRepos/python-classifier-2022/DataPresentation/"
 
 def prepare_frame(file):

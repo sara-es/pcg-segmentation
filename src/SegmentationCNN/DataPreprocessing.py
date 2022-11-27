@@ -14,7 +14,7 @@ class DataPreprocessing:
 
     SAMPLING_FREQUENCY = 4000 
     DOWNSAMPLE_FREQUENCY = 50 
-    PATCH_SIZE = 256
+    PATCH_SIZE = 64
     STRIDE = int(PATCH_SIZE / 8)
 
     def __init__(self, wav, tsv, fs, filename):
