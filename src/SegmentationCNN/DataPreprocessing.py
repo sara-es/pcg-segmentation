@@ -12,7 +12,7 @@ from PlotSignals import PlotSignals
 
 class DataPreprocessing: 
 
-    SAMPLING_FREQUENCY = 4000 
+
     DOWNSAMPLE_FREQUENCY = 50 
     PATCH_SIZE = 64
     STRIDE = int(PATCH_SIZE / 8)
@@ -21,7 +21,7 @@ class DataPreprocessing:
         self.wav = wav
         self.tsv = tsv
         self.filename = filename 
-        self.sample_rate = fs
+        self.sampling_frequency = fs
 
         self.segmentation_processing()
         if len(self.wav) >0  and len(self.segmentation_array) >0:
@@ -41,13 +41,13 @@ class DataPreprocessing:
 
     def normalise_envelopes(self):
         self.homo_env = self.normalise_envelope(
-                                self.downsample_envelope(self.homo_env, self.SAMPLING_FREQUENCY, self.DOWNSAMPLE_FREQUENCY))
+                                self.downsample_envelope(self.homo_env, self.sampling_frequency, self.DOWNSAMPLE_FREQUENCY))
         
         self.hilb_env = self.normalise_envelope(
-                                self.downsample_envelope(self.hilb_env, self.SAMPLING_FREQUENCY, self.DOWNSAMPLE_FREQUENCY))
+                                self.downsample_envelope(self.hilb_env, self.sampling_frequency, self.DOWNSAMPLE_FREQUENCY))
                             
         self.wave_env = self.normalise_envelope(
-                                self.downsample_envelope(self.wave_env, self.SAMPLING_FREQUENCY, self.DOWNSAMPLE_FREQUENCY))
+                                self.downsample_envelope(self.wave_env, self.sampling_frequency, self.DOWNSAMPLE_FREQUENCY))
 
         self.power_spec_env = self.normalise_envelope(
                                 self.downsample_envelope(self.power_spec_env, (1+1e-9), self.homo_env.shape[0]/len(self.power_spec_env)))
@@ -63,17 +63,17 @@ class DataPreprocessing:
 
     def filter_signal(self, signal):
         # Apply high pass and low pass buttherworth filters of 25 and 400 hz 
-        low_filtered = self.get_butterworth_low_pass_filter(signal, 2, 400, self.SAMPLING_FREQUENCY)
-        high_filtered = self.get_butterworth_high_pass_filter(low_filtered, 2, 25, self.SAMPLING_FREQUENCY)
+        low_filtered = self.get_butterworth_low_pass_filter(signal, 2, 400, self.sampling_frequency)
+        high_filtered = self.get_butterworth_high_pass_filter(low_filtered, 2, 25, self.sampling_frequency)
         return high_filtered
 
 
     def spike_removal(self, signal):
-        return schmidt_spike_removal(signal, self.SAMPLING_FREQUENCY)
+        return schmidt_spike_removal(signal, self.sampling_frequency)
 
     
     def get_homomorphic_envelope(self, signal, lpf_frequency=8):
-        B_low, A_low = butter(1, 2 * lpf_frequency / self.SAMPLING_FREQUENCY, btype="low")
+        B_low, A_low = butter(1, 2 * lpf_frequency / self.sampling_frequency, btype="low")
         homomorphic_envelope = np.exp(filtfilt(B_low, A_low, np.log(np.abs(hilbert(signal))), padlen=3*(max(len(B_low),len(A_low))-1)))
 
         # Remove spurious spikes in first sample
@@ -89,8 +89,8 @@ class DataPreprocessing:
         wavelet_level = 3
         wavelet_name = "rbio3.9"
 
-        if len(signal) < self.SAMPLING_FREQUENCY * 1.025:
-            signal = np.concatenate((signal, np.zeros((round(0.025 * self.SAMPLING_FREQUENCY)))))
+        if len(signal) < self.sampling_frequency * 1.025:
+            signal = np.concatenate((signal, np.zeros((round(0.025 * self.sampling_frequency)))))
 
         # audio needs to be longer than 1 second for getDWT to work
         cD, cA = getDWT(signal, wavelet_level, wavelet_name)
@@ -103,8 +103,8 @@ class DataPreprocessing:
 
     # From Danny's extract_features.py
     def get_power_spectral_density_envelope(self, signal):
-        f, t, Sxx = spectrogram(signal, self.SAMPLING_FREQUENCY, window=('hamming'), nperseg=int(self.SAMPLING_FREQUENCY / 41),
-                                       noverlap=int(self.SAMPLING_FREQUENCY / 81), nfft=self.SAMPLING_FREQUENCY)
+        f, t, Sxx = spectrogram(signal, self.sampling_frequency, window=('hamming'), nperseg=int(self.sampling_frequency / 41),
+                                       noverlap=int(self.sampling_frequency / 81), nfft=self.sampling_frequency)
         # ignore the DC component - springer does this by returning freqs from 1 to round(sampling_frequency/2). We do the same by removing the first row.
         Sxx = Sxx[1:, :]
         low_limit_position = np.where(f == 40)
@@ -128,8 +128,8 @@ class DataPreprocessing:
     # From Danny's train_segmentation.py 
     def segmentation_processing(self):
         segmentation_details = create_segmentation_array(self.wav, self.tsv, 
-                                         recording_frequency=self.SAMPLING_FREQUENCY, 
-                                         feature_frequency=self.SAMPLING_FREQUENCY)
+                                         recording_frequency=self.sampling_frequency, 
+                                         feature_frequency=self.sampling_frequency)
         try: 
             self.wav = segmentation_details[0][0]
             self.segmentation_array = segmentation_details[1][0]-1
@@ -188,7 +188,7 @@ class DataPreprocessing:
         return patch_list 
 
     def downsample_segmentation_array(self):
-        labels_per_sample = int(self.sample_rate / self.DOWNSAMPLE_FREQUENCY)
+        labels_per_sample = int(self.sampling_frequency / self.DOWNSAMPLE_FREQUENCY)
         downsample_segment = [] 
         for i in range(0, self.segmentation_array.shape[0], labels_per_sample):
             modal_val = statistics.mode(self.segmentation_array[i:i+labels_per_sample])
