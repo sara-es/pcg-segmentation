@@ -1,26 +1,27 @@
 import numpy as np 
-import pandas as pd 
 import torch 
 import torch.nn as nn 
 import torch.nn.functional as F 
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
-from torch.utils.data import Subset 
+
 import sys 
 import matplotlib.pyplot as plt 
 from sklearn.model_selection import StratifiedKFold
 from EarlyStopping import EarlyStopping
-
+from tqdm.contrib import tzip
+from create_segmentation_array import create_segmentation_array
 
 sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
 
 from DataManipulation.PatientFrame import PatientFrame
-from CNNData import CNNData 
-from GitHubUNet import UNet, init_weights
-from DataPreprocessing import DataPreprocessing
-from utils import get_wavs_and_tsvs
+
+from GitHubUNet import UNet
+
+from utils import get_all_patient_info
+from SegmentationHMM import train_segmentation, run_segmentation
 
 # dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
 dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_100"
@@ -38,51 +39,83 @@ def set_up_model():
     criterion = nn.CrossEntropyLoss()
 
 
-def get_patient_data_dict(dataset_dir):
-
-    wavs, tsvs, fs, names = get_wavs_and_tsvs(dataset_dir, return_names=True)
-    x_patches = []
-    y_patches = [] 
-
-    patient_data_dict = dict()
-    for i in range(len(wavs)):
- 
-        dp = DataPreprocessing(wavs[i], tsvs[i], fs[i], names[i])
-        patient_ID = int(names[i].split("_")[0])
-        if len(dp.wav) >0  and len(dp.segmentation_array) >0:
-            x_patches = dp.extract_env_patches()
-            y_patches = dp.extract_segmentation_patches()
-        
-        if patient_data_dict.get(patient_ID):
-            patient_data_dict[patient_ID].append(CNNData(np.array(x_patches), np.array(y_patches)))
-        else:
-            patient_data_dict[patient_ID] = [CNNData(np.array(x_patches), np.array(y_patches))]
-       
-    return patient_data_dict
-
 def stratified_sample(csv_file, dataset_dir, folds=10):
     pf = PatientFrame(csv_file)
-
-    patient_data_dict = get_patient_data_dict(dataset_dir)
+    print("RUNNING")
+    patient_info = get_all_patient_info(dataset_dir)
 
     folds = 5
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1)
   
     for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
-        x_train_fold, x_test_fold = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
+        patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
 
-        train_data_list = [ConcatDataset(patient_data_dict[id]) for id in x_train_fold]
-        train_data = ConcatDataset(train_data_list)
-       
-        validation_data_list = [ConcatDataset(patient_data_dict[id]) for id in x_test_fold]
-        validation_data = ConcatDataset(validation_data_list)
+        training_info = dict([ (k,v) for (k,v) in patient_info.items() if k in patients_train.values])
+        validation_info = dict([ (k,v) for (k,v) in patient_info.items() if k in patients_test.values])
 
-        train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=True)
-        validation_loader = DataLoader(dataset=validation_data, batch_size=1, shuffle=True)
+        hmm_correct_results, hmm_incorrect_results, accuracies = train_eval_HMM(training_info, validation_info)
+        print(len(hmm_correct_results.keys()), len(hmm_incorrect_results), accuracies)
+        # prep_CNN(wavs, tsvs, fs, names, patients_train, patients_test)
 
-        set_up_model()
-        print("TRAINING")
-        train(train_loader, validation_loader, len(validation_data))
+
+def prep_CNN(wavs, tsvs, fs, names, patients_train, patients_test):
+    # Remember to -1 from segmentations, not done yet 
+    patient_data_dict = get_patient_data_dict(wavs, tsvs, fs, names)
+    train_data_list = [ConcatDataset(patient_data_dict[id]) for id in patients_train]
+    train_data = ConcatDataset(train_data_list)
+    
+    validation_data_list = [ConcatDataset(patient_data_dict[id]) for id in patients_test]
+    validation_data = ConcatDataset(validation_data_list)
+
+    train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=True)
+    validation_loader = DataLoader(dataset=validation_data, batch_size=1, shuffle=True)
+
+    set_up_model()
+    train(train_loader, validation_loader, len(validation_data))
+
+def train_eval_HMM(training_info, validation_info):
+
+    train_wavs, train_segments = [], []
+    valid_wavs, valid_segments = [], []
+    valid_files = [] 
+    for (patient_id, patient_file_info) in training_info.items():
+        for (k,v) in patient_file_info.items():
+            train_wavs.append(v[0])
+            train_segments.append(v[1])
+
+    for (patient_id, patient_file_info) in validation_info.items():
+        for (k,v) in patient_file_info.items():
+            valid_wavs.append(v[0])
+            valid_segments.append(v[1])
+            valid_files.append(k)
+        
+    models, pi_vector, total_obs_distribution= train_segmentation.train_hmm_segmentation(train_wavs, train_segments)
+
+    idx = 0
+    correct_results = dict()
+    incorrect_results = dict()
+    accuracies = np.zeros(len(valid_wavs))
+
+    for wav, segments, name in tzip(valid_wavs, valid_segments, valid_files):
+
+        y_hat = run_segmentation.run_hmm_segmentation(wav,
+                                    models,
+                                    pi_vector,
+                                    total_obs_distribution,
+                                    use_psd=True,
+                                    return_heart_rate=False,
+                                    try_multiple_heart_rates=False)
+
+        accuracies[idx] = (segments == y_hat).mean() 
+
+        if accuracies[idx] > 0.5: 
+            correct_results[name] = y_hat
+        else:
+            incorrect_results[name] = y_hat
+        idx += 1
+    return correct_results, incorrect_results, accuracies
+        
+
 
 def train(train_loader, validation_loader, validation_size, epochs=15, patience=5):
     

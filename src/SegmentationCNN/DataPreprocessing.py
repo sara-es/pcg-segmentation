@@ -1,11 +1,11 @@
-from create_segmentation_array import create_segmentation_array
+
 from scipy.signal import butter, filtfilt, hilbert, spectrogram
 import statistics
 from schmidt_spike_removal import schmidt_spike_removal
 from librosa import resample 
 import numpy as np 
-import pywt
-from utils import get_wavs_and_tsvs
+
+
 from getDWT import * 
 
 from PlotSignals import PlotSignals
@@ -17,17 +17,14 @@ class DataPreprocessing:
     PATCH_SIZE = 64
     STRIDE = int(PATCH_SIZE / 8)
 
-    def __init__(self, wav, tsv, fs, filename):
+    def __init__(self, wav, segmentation_array, fs):
         self.wav = wav
-        self.tsv = tsv
-        self.filename = filename 
+        self.segmentation_array = segmentation_array
         self.sampling_frequency = fs
 
-        self.segmentation_processing()
-        if len(self.wav) >0  and len(self.segmentation_array) >0:
-            self.set_envelopes()
-            self.normalise_envelopes()
-            self.create_envelope_signal()
+        self.set_envelopes()
+        self.normalise_envelopes()
+        self.create_envelope_signal()
         
     def set_envelopes(self):
         filtered_signal = self.filter_signal(self.wav)
@@ -124,19 +121,6 @@ class DataPreprocessing:
         mean = np.mean(envelope)
         std = np.std(envelope)
         return (envelope - mean)/std
-
-    # From Danny's train_segmentation.py 
-    def segmentation_processing(self):
-        segmentation_details = create_segmentation_array(self.wav, self.tsv, 
-                                         recording_frequency=self.sampling_frequency, 
-                                         feature_frequency=self.sampling_frequency)
-        try: 
-            self.wav = segmentation_details[0][0]
-            self.segmentation_array = segmentation_details[1][0]-1
-        except: 
-            self.wav = []
-            self.segmentation_array =  []
-
 
     # From Danny's extract_features.py
     def get_butterworth_low_pass_filter(self, original_signal,
