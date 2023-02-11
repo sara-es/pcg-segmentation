@@ -161,11 +161,13 @@ class DataPreprocessing:
     def extract_segmentation_patches(self):
         patch_list = [] 
         if len(self.segmentation_array) < self.PATCH_SIZE: 
+
             padding = self.PATCH_SIZE - len(self.segmentation_array)
             self.segmentation_array = np.pad(self.segmentation_array, pad_width=padding, mode="constant", constant_values=(0))
         for i in range(0, len(self.segmentation_array), self.STRIDE):
             patch = self.segmentation_array[i:i+self.PATCH_SIZE]
             if len(patch) < self.PATCH_SIZE:
+
                 break 
             else: 
                 patch_list.append(patch)
