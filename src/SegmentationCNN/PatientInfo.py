@@ -17,6 +17,10 @@ class PatientInfo:
         
         for file_ in tqdm(sorted(os.listdir(self.dataset_dir))):
             root, extension = os.path.splitext(file_)
+            # Sketchy files - ignore 
+            if "50782_MV" in root:
+                print("Ignoring")
+                continue 
             if extension == ".wav":
                 wav_file = file_
                 segmentation_file = os.path.join(self.dataset_dir, root + ".tsv")

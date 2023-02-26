@@ -12,7 +12,9 @@ OUTCOMES = ["Normal", "Abnormal"]
 NUM_FRAMES = 1000 
 DATA_PATH = "/Users/serenahuston/GitRepos/Data/"
 TRAINING_DATA_PATH_2022 = DATA_PATH + "PhysioNet_2022/"
-DATA_PRESENTATION_PATH = "/Users/serenahuston/GitRepos/python-classifier-2022/DataPresentation/"
+DATA_PRESENTATION_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/DataPresentation/"
+RESULTS_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Results/"
+MODEL_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/"
 
 def prepare_frame(file):
     patient_frame = pd.read_csv(file)

@@ -101,17 +101,20 @@ class DataPresentation:
         
         plt.savefig(DATA_PRESENTATION_PATH + str(patient_num) + "_audio_plot_with_FHS")
 
-    def plot_multi_bar_chart(self, x_labels, x_label_title, y_label_title, data, bar_labels, title):
+    def plot_multi_bar_chart(self, x_labels, x_label_title, y_label_title, data, errors, bar_labels, title):
         plt.title(title, fontsize=self.title_size)
         x_ticks = np.arange(len(x_labels))
         bar_spacing = np.linspace(-0.2, 0.2, num=len(bar_labels))
         for i in range(len(bar_labels)):
-            plt.bar(x_ticks+bar_spacing[i], data[i], width=0.4, label=bar_labels[i], color=self.colour_scheme[i], zorder=3)
+            plt.bar(x_ticks+bar_spacing[i], data[i], yerr=errors[i], capsize=10, width=0.4, 
+                    label=bar_labels[i], color=self.colour_scheme[i], zorder=3)
+
+
         plt.xticks(x_ticks, x_labels, fontsize=self.ax_size)
         plt.xlabel(x_label_title, fontsize=self.ax_size)
         plt.ylabel(y_label_title, fontsize=self.ax_size)
         plt.grid(zorder=0)
-        plt.legend()    
+        plt.legend(loc='lower right')    
         plt.savefig(DATA_PRESENTATION_PATH + title.replace(" ", "_"))
 
     def plot_confusion_matrix(self, confusion_matrix, title, xlabel, ylabel, xticks, yticks):
@@ -141,6 +144,24 @@ class DataPresentation:
         ax.set_title(title, fontsize=self.title_size, wrap=True)
         ax.grid()
         plt.savefig(DATA_PRESENTATION_PATH + title.replace(" ", "_"))
+
+    def plot_model_comp_box_plots(self, cnn_accuracies, hmm_accuracies, fold_num):
+        fig, ax = plt.subplots()
+        ax.set_title('Distribution of the Model Accuracies in Fold ' + str(fold_num))
+        ax.boxplot([cnn_accuracies, hmm_accuracies])
+        ax.set_ylabel("Accuracy")
+        ax.set_xlabel("Model")
+
+        ax.set_ylim(-0.1, 1)
+
+        ax.boxplot([cnn_accuracies, hmm_accuracies],
+                        boxprops=dict( color="black"),
+                        capprops=dict(color=self.colour_scheme[1]),
+                        whiskerprops=dict(color="black"),
+                        flierprops=dict(markeredgecolor=self.colour_scheme[1], markersize=3),
+                        medianprops=dict(color=self.colour_scheme[1]))
+        ax.grid()
+        plt.savefig(DATA_PRESENTATION_PATH + "model_comp_accs_" + str(fold_num))
 
     def plot_loss_and_accuracy(self, loss, accuracy):
         fig, (ax1, ax2) = plt.subplots(1, 2)
