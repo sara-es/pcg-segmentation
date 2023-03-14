@@ -3,8 +3,8 @@ import numpy as np
 from scipy import signal as signal
 from scipy.signal import butter, filtfilt, hilbert
 
-from schmidt_spike_removal import schmidt_spike_removal
-from getDWT import getDWT
+from SegmentationHMM.schmidt_spike_removal import schmidt_spike_removal
+from SegmentationHMM.getDWT import getDWT
 
 # from scipy.signal import resample
 from librosa import resample

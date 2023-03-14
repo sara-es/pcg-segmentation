@@ -2,7 +2,9 @@
 D. Springer, Logistic Regression-HSMM-based Heart Sound Segmentation
 https://physionet.org/content/hss/1.0/
 """
+import sys 
 
+sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from SegmentationHMM.upsample_states import upsample_states
 from SegmentationHMM.heart_rate import get_heart_rate
 from SegmentationHMM.extract_features import getSpringerPCGFeatures

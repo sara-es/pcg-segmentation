@@ -7,13 +7,15 @@ import os
 import numpy as np
 import scipy.io
 
+
 sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
+
 from SegmentationHMM.extract_features import getSpringerPCGFeatures
 from SegmentationHMM.run_segmentation import run_hmm_segmentation
-from utils import get_wavs_and_tsvs
+from SegmentationHMM.utils import get_wavs_and_tsvs
 
 
-def train_hmm_segmentation(recordings, segmentations, recording_freq=4000, feature_freq=50, use_psd=True):
+def train_hmm_segmentation(recordings, annotations, recording_freq=4000, feature_freq=50, use_psd=True):
     """
 
     Parameters
@@ -33,20 +35,37 @@ def train_hmm_segmentation(recordings, segmentations, recording_freq=4000, featu
     # state_observation_values = np.zeros((numPCGs, number_of_states))
     state_observation_values = []
     
-    for clipped_recording, segmentation in zip(recordings, segmentations):
-        PCG_Features, featuresFs = getSpringerPCGFeatures(clipped_recording,
-                                                            recording_freq,
-                                                            use_psd=use_psd,
-                                                            featureFs=feature_freq)
+    for rec_idx in trange(len(recordings)):
+        full_recording = recordings[rec_idx]
+        
+        if annotations[rec_idx].shape[0] == 3 and annotations[rec_idx].shape[1] != 3: # hacky workaround to hackier data handling
+        
+                annotation = annotations[rec_idx].T
+        else:
+            annotation = annotations[rec_idx]
 
-        these_state_observations = []
-        for state_i in range(1, number_of_states + 1):
-            if PCG_Features.shape[0] != segmentation.shape[0]:
-                min_length = min(PCG_Features.shape[0], segmentation.shape[0])
-                PCG_Features = PCG_Features[:min_length]
-                segmentation = segmentation[:min_length]
-            these_state_observations.append(PCG_Features[segmentation == state_i, :])
-        state_observation_values.append(these_state_observations)
+        if annotation.shape[0] <= 1:
+            continue
+
+        clipped_recordings, segmentations = create_segmentation_array(full_recording,
+                                                                    annotation,
+                                                                    recording_frequency=recording_freq,
+                                                                    feature_frequency=feature_freq)
+
+        for clipped_recording, segmentation in zip(clipped_recordings, segmentations):
+            PCG_Features, featuresFs = getSpringerPCGFeatures(clipped_recording,
+                                                              recording_freq,
+                                                              use_psd=use_psd,
+                                                              featureFs=feature_freq)
+
+            these_state_observations = []
+            for state_i in range(1, number_of_states + 1):
+                if PCG_Features.shape[0] != segmentation.shape[0]:
+                    min_length = min(PCG_Features.shape[0], segmentation.shape[0])
+                    PCG_Features = PCG_Features[:min_length]
+                    segmentation = segmentation[:min_length]
+                these_state_observations.append(PCG_Features[segmentation == state_i, :])
+            state_observation_values.append(these_state_observations)
 
     models, pi_vector, total_obs_distribution = _fit_model(state_observation_values)
 
@@ -54,6 +73,7 @@ def train_hmm_segmentation(recordings, segmentations, recording_freq=4000, featu
 
 
 def get_recordings_and_segmentations():
+    print("HERE")
     segmentations = []
     clipped_recordings = []
     test_segmentations = []
@@ -211,7 +231,8 @@ def _fit_model(state_observation_values):
         labels = 2 * np.ones(training_data[0].shape[0] + training_data[1].shape[0])
 
         labels[0:training_data[0].shape[0]] = 1
- 
+
+
         all_data = np.concatenate(training_data, axis=0)
 
         regressor = LogisticRegression(multi_class="multinomial")
