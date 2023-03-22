@@ -16,7 +16,7 @@ from DataManipulation.PatientFrame import *
 from DataManipulation.PatientFrame import PatientFrame
 from DataManipulation.DataPresentation import DataPresentation 
 
-from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet
+from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet, init_weights
 from PatientInfo import * 
 from SegmentationCNN.Models.Envelope_CNN.EarlyStopping import EarlyStopping
 from Envelope_Enum import * 
@@ -33,31 +33,27 @@ data_pres_folder = ""
 def set_up_model(num_envs):
     global model, optimiser, criterion 
     model = UNet(n_channels=num_envs)
-    model_file = "model_weights_2016_64_8.pt"
-    model.load_state_dict(torch.load(MODEL_PATH + model_file))
+    model.apply(init_weights)
     optimiser = torch.optim.Adam(model.parameters(), lr=0.0001)
     criterion = nn.CrossEntropyLoss()
 
 def make_folder_name(envelopes):
-    folder_name = ""
+    folder_name = []
     if Envelope.HOMO in envelopes:
-        folder_name += "homo_"
+        folder_name.append("homo")
     if Envelope.HILB in envelopes:
-        folder_name += "hilb_"
+        folder_name.append("hilb")
     if Envelope.WAVE in envelopes:
-        folder_name += "wave_"
+        folder_name.append("wave")
     if Envelope.PSD in envelopes:
-        folder_name += "psd"
-    return folder_name
+        folder_name.append("psd")
+    return "_".join(folder_name)
 
 
 def stratified_sample(csv_file, dataset_dir, folds=10):
     global fold_num, data_pres_folder
     pf = PatientFrame(csv_file)
     print("RUNNING")
-    # UPDATE DATA_PREPROCESSING CALL 
-    patient_info = PatientInfo(dataset_dir)
-    patient_info.get_data()
 
     folds = 5
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1)
@@ -66,10 +62,10 @@ def stratified_sample(csv_file, dataset_dir, folds=10):
     env_combos = [[Envelope.HOMO], [Envelope.HILB], [Envelope.WAVE], [Envelope.PSD]]
 
     for i in range(len(env_combos)):
-        patient_info = PatientInfo(dataset_dir, window=64, stride=8)
+        patient_info = PatientInfo(dataset_dir, envelopes=env_combos[i])
         patient_info.get_data()
         folder_name = make_folder_name(env_combos[i])
-        data_pres_folder = DATA_PRESENTATION_PATH + "/results_envelopes_" + folder_name + "/"
+        data_pres_folder = DATA_PRESENTATION_PATH + "results_envelopes_" + folder_name + "/"
         fold_num = 1
         for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
             patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
@@ -126,7 +122,7 @@ def train(train_loader, validation_loader, validation_size, epochs=15, patience=
             loss = criterion(torch.t(z), y_test[0])
             validation_loss.append(loss.item())
 
-            softmax = F.softmax(z, dim=1)
+            softmax = F.softmax(z, dim=0)
             _, yhat = torch.max(softmax, 0)
         
             for i in range(1, yhat.shape[0]): 

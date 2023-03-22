@@ -27,6 +27,7 @@ class DataPreprocessing:
         self.seg_patches = [] 
         self.env_patches = []
         self.set_envelopes(envelopes)
+        self.segmentation_array = self.downsample_segmentation_array()
 
     def set_envelopes(self, envelopes):
         spike_rem_signal = self.get_spike_rem_signal()
@@ -45,6 +46,7 @@ class DataPreprocessing:
             self.set_psd_env(spike_rem_signal)
             self.combined_envs.append(self.psd_env)
         self.combined_envs = np.array(self.combined_envs)
+
         
     def set_homo_env(self, spike_rem_signal):
         self.homo_env = self.get_homomorphic_envelope(spike_rem_signal)
@@ -174,6 +176,7 @@ class DataPreprocessing:
                 self.env_patches.append(patch)
         self.env_patches = np.array(self.env_patches)
 
+
     def extract_segmentation_patches(self):
         for i in range(0, len(self.segmentation_array), self.STRIDE):
             padding = i+self.PATCH_SIZE - len(self.segmentation_array)
@@ -185,6 +188,7 @@ class DataPreprocessing:
             else: 
                 patch = self.segmentation_array[i:i+self.PATCH_SIZE]
                 self.seg_patches.append(patch)
+
         self.seg_patches = np.array(self.seg_patches)
 
     def downsample_segmentation_array(self):

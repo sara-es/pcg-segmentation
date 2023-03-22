@@ -67,11 +67,10 @@ class PatientInfo:
 
     def update_CNN_data(self):
         dp = DataPreprocessing(self.info_dict["Clipped_WAV"][-1], self.info_dict["Segmentations"][-1]-1, self.info_dict["Frequency"][-1],
-                               self.envelopes)
+                               envelopes=self.envelopes)
         
         dp.extract_env_patches()
         dp.extract_segmentation_patches()
-        print(dp.env_patches.shape)
 
         self.info_dict["CNN_Data"].append(CNNData(dp.env_patches, dp.seg_patches, self.info_dict["Filename"][-1], range(0, len(dp.env_patches))))
         
