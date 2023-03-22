@@ -112,7 +112,7 @@ def train(train_loader, validation_loader, validation_size, window, epochs=15, p
             loss = criterion(torch.t(z), y_test[0])
             validation_loss.append(loss.item())
 
-            softmax = F.softmax(z, dim=1)
+            softmax = F.softmax(z, dim=0)
             _, yhat = torch.max(softmax, 0)
         
             for i in range(1, yhat.shape[0]): 
