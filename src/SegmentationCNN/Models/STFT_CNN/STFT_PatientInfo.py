@@ -1,23 +1,22 @@
 import os 
 from tqdm import tqdm
 
-
+from STFT_DataPreprocessing import STFT_DataPreprocessing
+from STFT_CNN_Data import STFT_CNN_Data
 import scipy as sp
 import pandas as pd 
-import sys
+import sys 
 
 sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.create_segmentation_array import *
-from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
-from SegmentationCNN.Models.Envelope_CNN.CNNData import * 
 
-class PatientInfo: 
+class PatientInfo_STFT: 
 
-    def __init__(self, dataset_dir, window=64, stride=8):
+    def __init__(self, dataset_dir, window=5120, stride=640):
         self.dataset_dir = dataset_dir 
         self.info_dict = {"ID": [], "Filename": [], "Raw_WAV": [], "Frequency" : [], 
                           "TSV": [], "Clipped_WAV" : [], "Segmentations": [], 
-                          "CNN_Data": [], }
+                          "STFT_Data":[] }
         self.window = window
         self.stride = stride
 
@@ -66,11 +65,11 @@ class PatientInfo:
         
 
     def update_CNN_data(self):
-        dp = DataPreprocessing(self.info_dict["Clipped_WAV"][-1], self.info_dict["Segmentations"][-1]-1, self.info_dict["Frequency"][-1],
+        dp = STFT_DataPreprocessing(self.info_dict["Clipped_WAV"][-1], self.info_dict["Segmentations"][-1]-1, self.info_dict["Frequency"][-1],
                                self.window, self.stride)
         
-        dp.extract_env_patches()
-        dp.extract_segmentation_patches()
 
-        self.info_dict["CNN_Data"].append(CNNData(dp.env_patches, dp.seg_patches, self.info_dict["Filename"][-1], range(0, len(dp.env_patches))))
-        
+        dp.extract_wav_and_seg_patches()
+
+
+        self.info_dict["STFT_Data"].append(STFT_CNN_Data(np.array(dp.stft_patches), np.array(dp.output_patches), self.info_dict["Filename"][-1], range(0, len(dp.stft_patches))))

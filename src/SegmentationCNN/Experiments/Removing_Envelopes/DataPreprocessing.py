@@ -7,7 +7,7 @@ import sys
 
 sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from SegmentationHMM import getDWT, schmidt_spike_removal
-
+from Envelope_Enum import *
 
 
 
@@ -17,7 +17,8 @@ class DataPreprocessing:
 
     DOWNSAMPLE_FREQUENCY = 50 
 
-    def __init__(self, wav, segmentation_array, fs, window=64, stride=8):
+    def __init__(self, wav, segmentation_array, fs, window=64, stride=8,
+                  envelopes=[Envelope.HOMO, Envelope.HILB, Envelope.WAVE, Envelope.PSD]):
         self.wav = wav
         self.segmentation_array = segmentation_array
         self.sampling_frequency = fs
@@ -25,40 +26,52 @@ class DataPreprocessing:
         self.STRIDE = stride 
         self.seg_patches = [] 
         self.env_patches = []
-        self.set_envelopes()
-        self.normalise_envelopes()
-        self.create_envelope_signal()
-        
-        
-    def set_envelopes(self):
-        filtered_signal = self.filter_signal(self.wav)
-        spike_rem_signal = self.spike_removal(filtered_signal)
-        self.homo_env = self.get_homomorphic_envelope(spike_rem_signal)
-        self.hilb_env = self.get_hilbert_envelope(spike_rem_signal)
-        self.wave_env = self.get_wavelet_envelope(spike_rem_signal)
-        self.power_spec_env = self.get_power_spectral_density_envelope(spike_rem_signal)
+        self.set_envelopes(envelopes)
 
-    def normalise_envelopes(self):
+    def set_envelopes(self, envelopes):
+        spike_rem_signal = self.get_spike_rem_signal()
+        self.homo_env, self.hilb_env, self.wave_env, self.psd_env = [], [], [], []
+        self.combined_envs = []
+        if Envelope.HOMO in envelopes:
+            self.set_homo_env(spike_rem_signal)
+            self.combined_envs.append(self.homo_env)
+        if Envelope.HILB in envelopes:
+            self.set_hilb_env(spike_rem_signal)
+            self.combined_envs.append(self.hilb_env)
+        if Envelope.WAVE in envelopes:
+            self.set_wave_env(spike_rem_signal)
+            self.combined_envs.append(self.wave_env)
+        if Envelope.PSD in envelopes:
+            self.set_psd_env(spike_rem_signal)
+            self.combined_envs.append(self.psd_env)
+        self.combined_envs = np.array(self.combined_envs)
+        
+    def set_homo_env(self, spike_rem_signal):
+        self.homo_env = self.get_homomorphic_envelope(spike_rem_signal)
         self.homo_env = self.normalise_envelope(
                                 self.downsample_envelope(self.homo_env, self.sampling_frequency, self.DOWNSAMPLE_FREQUENCY))
         
+    def set_hilb_env(self, spike_rem_signal):
+        self.hilb_env = self.get_hilbert_envelope(spike_rem_signal)
         self.hilb_env = self.normalise_envelope(
                                 self.downsample_envelope(self.hilb_env, self.sampling_frequency, self.DOWNSAMPLE_FREQUENCY))
-                            
+    
+    def set_wave_env(self, spike_rem_signal):
+        self.wave_env = self.get_wavelet_envelope(spike_rem_signal)
         self.wave_env = self.normalise_envelope(
                                 self.downsample_envelope(self.wave_env, self.sampling_frequency, self.DOWNSAMPLE_FREQUENCY))
-
+        
+    def set_psd_env(self, spike_rem_signal):
+        self.power_spec_env = self.get_power_spectral_density_envelope(spike_rem_signal)
         self.power_spec_env = self.normalise_envelope(
                                 self.downsample_envelope(self.power_spec_env, (1+1e-9), self.homo_env.shape[0]/len(self.power_spec_env)))
 
-        self.segmentation_array = self.downsample_segmentation_array()
 
-        # ps = PlotSignals()
-        # ps.plot_envelopes([self.homo_env, self.hilb_env, self.wave_env, self.power_spec_env], self.filename)
-
+    def get_spike_rem_signal(self):
+        filtered_signal = self.filter_signal(self.wav)
+        spike_rem_signal = self.spike_removal(filtered_signal)
+        return spike_rem_signal
         
-    def create_envelope_signal(self):
-        self.combined_envs = np.vstack((self.homo_env, self.hilb_env, self.wave_env, self.power_spec_env))
 
 
     def filter_signal(self, signal):
@@ -146,7 +159,7 @@ class DataPreprocessing:
         B_high, A_high = butter(order, 2 * cutoff / sampling_frequency, btype="highpass")
         high_pass_filtered_signal = filtfilt(B_high, A_high, original_signal)
         return high_pass_filtered_signal
-        
+
     
     def extract_env_patches(self):
         for i in range(0, self.combined_envs.shape[1], self.STRIDE):

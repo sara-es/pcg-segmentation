@@ -1,6 +1,7 @@
 import os 
 from tqdm import tqdm
 
+from DataPreprocessing import DataPreprocessing
 
 import scipy as sp
 import pandas as pd 
@@ -8,18 +9,17 @@ import sys
 
 sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.create_segmentation_array import *
-from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
 from SegmentationCNN.Models.Envelope_CNN.CNNData import * 
+from Envelope_Enum import *
 
 class PatientInfo: 
 
-    def __init__(self, dataset_dir, window=64, stride=8):
+    def __init__(self, dataset_dir, envelopes=[Envelope.HOMO, Envelope.HILB, Envelope.WAVE, Envelope.PSD]):
         self.dataset_dir = dataset_dir 
         self.info_dict = {"ID": [], "Filename": [], "Raw_WAV": [], "Frequency" : [], 
                           "TSV": [], "Clipped_WAV" : [], "Segmentations": [], 
                           "CNN_Data": [], }
-        self.window = window
-        self.stride = stride
+        self.envelopes = envelopes
 
 
     def get_data(self):
@@ -67,10 +67,11 @@ class PatientInfo:
 
     def update_CNN_data(self):
         dp = DataPreprocessing(self.info_dict["Clipped_WAV"][-1], self.info_dict["Segmentations"][-1]-1, self.info_dict["Frequency"][-1],
-                               self.window, self.stride)
+                               self.envelopes)
         
         dp.extract_env_patches()
         dp.extract_segmentation_patches()
+        print(dp.env_patches.shape)
 
         self.info_dict["CNN_Data"].append(CNNData(dp.env_patches, dp.seg_patches, self.info_dict["Filename"][-1], range(0, len(dp.env_patches))))
         

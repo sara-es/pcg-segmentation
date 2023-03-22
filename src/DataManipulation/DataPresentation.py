@@ -163,17 +163,23 @@ class DataPresentation:
         ax.grid()
         plt.savefig(DATA_PRESENTATION_PATH + "model_comp_accs_" + str(fold_num))
 
-    def plot_loss_and_accuracy(self, loss, accuracy):
-        fig, (ax1, ax2) = plt.subplots(1, 2)
-        fig.set_size_inches(self.fig_width, self.fig_row_height)
+    def plot_loss_and_accuracy(self, train_loss, valid_loss, accuracy, data_pres_folder, fold_num):
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+        fig.set_size_inches(18, 10)
         fig.suptitle('Model Loss VS Accuracy Across Epochs', fontsize=self.title_size)
-        ax1.plot(loss, color=self.colour_scheme[0])
-        ax2.plot(accuracy, self.colour_scheme[1])
-        ax1.set_ylabel("Loss")
-        ax2.set_ylabel("Accuracy")
+        ax1.plot(train_loss, color=self.colour_scheme[0])
+        ax2.plot(valid_loss, self.colour_scheme[0])
+        ax3.plot(accuracy, self.colour_scheme[1])
+        ax1.set_ylabel("Training Loss")
+        ax2.set_ylabel("Validation Loss")
+        ax3.set_ylabel("Accuracy")
         ax1.set_xlabel("Epochs")
         ax2.set_xlabel("Epochs")
+        ax3.set_xlabel("Epochs")
         ax1.grid()
         ax2.grid()
-        plt.savefig(DATA_PRESENTATION_PATH + "Loss VS Accuracy")
+        ax3.grid()
+
+        plt.savefig(data_pres_folder + "Loss VS Accuracy"  + str(fold_num))
+
 

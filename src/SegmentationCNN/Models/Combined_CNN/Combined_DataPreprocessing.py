@@ -3,6 +3,7 @@ from scipy.signal import butter, filtfilt, hilbert, spectrogram
 import statistics
 from librosa import resample 
 import numpy as np 
+from scipy.signal import stft
 import sys 
 
 sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
@@ -23,8 +24,10 @@ class DataPreprocessing:
         self.sampling_frequency = fs
         self.PATCH_SIZE = window
         self.STRIDE = stride 
+        self.stft_patches = [] 
         self.seg_patches = [] 
         self.env_patches = []
+        self.audio_patches = [] 
         self.set_envelopes()
         self.normalise_envelopes()
         self.create_envelope_signal()
@@ -146,6 +149,21 @@ class DataPreprocessing:
         B_high, A_high = butter(order, 2 * cutoff / sampling_frequency, btype="highpass")
         high_pass_filtered_signal = filtfilt(B_high, A_high, original_signal)
         return high_pass_filtered_signal
+
+    def extract_audio_patches(self):
+        upsample_stride = int(self.STRIDE * (self.sampling_frequency/50))
+        upsample_patch_size = int(self.PATCH_SIZE * (self.sampling_frequency/50))
+        for i in range(0, len(self.wav), upsample_stride):
+            padding = i+upsample_patch_size - len(self.wav)
+            if i+upsample_patch_size >= len(self.wav):
+                self.wav = np.pad(self.wav, pad_width=(0,padding), mode="constant", constant_values=(0))
+                patch = self.wav[i:i+upsample_patch_size]
+            else: 
+                patch = self.wav[i:i+upsample_patch_size]
+            self.extract_stft_patches(patch)
+            self.audio_patches.append(patch)
+        self.stft_patches = np.array(self.stft_patches)
+        self.audio_patches = np.array(self.audio_patches)
         
     
     def extract_env_patches(self):
@@ -182,3 +200,15 @@ class DataPreprocessing:
             downsample_segment.append(modal_val)
         return downsample_segment
 
+    def extract_stft_patches(self,patch):
+        f, t, Zxx=stft(patch, fs=self.sampling_frequency, nperseg=1280, noverlap=1120, padded=False)
+        # Potentially complex vals
+        half = int(len(Zxx) / 2)
+        self.stft_patches.append(np.abs(Zxx[:half, :]))
+
+
+    def clip_samples(self):
+        min_len = min([self.stft_patches.shape[0], self.env_patches.shape[0], self.seg_patches.shape[0]])
+        self.env_patches = self.env_patches[:min_len, :, :]
+        self.seg_patches = self.seg_patches[:min_len, :]
+        self.stft_patches = self.stft_patches[:min_len, :, :]

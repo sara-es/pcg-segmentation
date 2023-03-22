@@ -1,4 +1,4 @@
-# https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_model.py
+# SOURCE: https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_model.py
 
 from STFT_CNN_Parts import * 
 import torch

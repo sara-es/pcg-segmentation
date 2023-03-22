@@ -2,9 +2,10 @@
 import numpy as np 
 from scipy.signal import stft
 import statistics
+import librosa
+import matplotlib.pyplot as plt 
 
-
-class DataPreprocessing_STFT: 
+class STFT_DataPreprocessing: 
 
 
     def __init__(self, wav, segmentation_array, fs, window=5120, stride=640):
@@ -35,39 +36,21 @@ class DataPreprocessing_STFT:
 
 
     def extract_stft_patches(self, patch):
-        f, t, Zxx=stft(patch, fs=self.sampling_frequency, nperseg=640, noverlap=560, padded=False)
-        # Potentially complex vals
-        # half = int(len(Zxx) / 2)
-        # shortened_Zxx = np.abs(Zxx[:half, :])
-        # print(Zxx.shape)
+        # D =librosa.stft(np.array(patch, dtype=np.float64), n_fft=576, hop_length=72, window="hann", center=False)
+        f, t, Zxx = stft(patch, fs=self.sampling_frequency, nperseg=576, noverlap=504, boundary=None, padded=False)
+        # f, t, Zxx = stft(patch, fs=self.sampling_frequency, nperseg=590, noverlap=512, boundary=None, padded=False)
+
+        shortened_Zxx = Zxx[:150, :]
         results = [] 
-        for i in range(0, len(Zxx), 20):
-            mean = np.mean(Zxx[i:i+20, :], axis=0)
+        for i in range(0, len(shortened_Zxx), 10):
+            mean = np.mean(shortened_Zxx[i:i+10, :], axis=0)
             results.append(np.abs(mean))
         self.stft_patches.append(results)
 
-
-    # def extract_output_patches(self, patch):
-    #     for i in range(0, len(patch), 160):
-    #         padding = i+1280 - len(patch)
-    #         if i+1280 >= len(patch):
-    #             patch = np.pad(patch, pad_width=(0,padding), mode="constant", constant_values=(0))
-    #             sub_patch = patch[i:i+1280]
-    #             break
-    #         else: 
-    #             sub_patch = patch[i:i+1280]
-    #         self.output_patches[-1].append(sub_patch)
-
-
-
-    
     def downsample_seg_patch(self, patch):
-        intervals = np.linspace(0, 5120, num=65, endpoint=False) 
         downsample_segment = [] 
-        for i in range(0, len(intervals)):
-            try:
-                modal_val = statistics.mode(patch[int(intervals[i]):int(intervals[i+1])])
-            except: 
-                modal_val = statistics.mode(patch[int(intervals[i]):len(patch)])
+        for i in range(0, len(patch), 80):
+            modal_val = statistics.mode(patch[i:i+80])
             downsample_segment.append(modal_val)
         self.output_patches.append(downsample_segment)
+

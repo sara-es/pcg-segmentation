@@ -20,7 +20,7 @@ results_dict = {64 : [], 128: [], 256 : [], 512 : []}
 accuracy_dict = {64 : [], 128: [], 256 : [], 512 : []}
 
 def get_model_results(window, stride, fold):
-    results_dir = RESULTS_PATH + str(window) + "_" + str(stride) + "/"
+    results_dir = RESULTS_PATH + str(window) + "_" + str(stride) + "_16_03_2023/"
     results_file = "cnn_" + str(window) + "_" + str(stride) + "_results_" + str(fold)
     with open(results_dir + results_file, 'rb') as f:
         results = pickle.load(f)
@@ -76,8 +76,6 @@ def make_sample_prediction(file_results, new_length, window, stride):
                 index_options[j+(stride*i)].append(sorted_windows[i][0][j].item())
             except KeyError: 
                 break
-
-    
     prediction = np.zeros(new_length)
     for (key, value) in index_options.items():  
         mode = statistics.mode(value)
@@ -86,7 +84,7 @@ def make_sample_prediction(file_results, new_length, window, stride):
         elif mode != (prediction[key-1] + 1) % 4:
             prediction[key] = prediction[key-1]
         else:
-            prediction[key] = mode 
+            prediction[key] = mode
     return prediction
 
 
@@ -103,6 +101,7 @@ for i in range(1, 6):
             cnn_downsample_prediction = make_sample_prediction(cnn_window_predictions, math.ceil(len(true_segmentations)/(4000/50)), WINDOWS[j], STRIDES[j])
             cnn_prediction = upsample_states(cnn_downsample_prediction, 50, 4000, len(true_segmentations)) + 1 
             accuracy_dict[WINDOWS[j]].append((cnn_prediction == true_segmentations).sum() / len(cnn_prediction))
+    print(accuracy_dict)
     print([np.mean(value) for (key, value) in accuracy_dict.items()])
 
 

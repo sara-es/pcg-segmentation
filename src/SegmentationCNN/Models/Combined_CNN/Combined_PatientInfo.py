@@ -11,13 +11,16 @@ from Utilities.create_segmentation_array import *
 from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
 from SegmentationCNN.Models.Envelope_CNN.CNNData import * 
 
-class PatientInfo: 
+from SegmentationCNN.Models.STFT_CNN.STFT_DataPreprocessing import * 
+from SegmentationCNN.Models.STFT_CNN.STFT_CNN_Data import * 
+
+class Combined_PatientInfo: 
 
     def __init__(self, dataset_dir, window=64, stride=8):
         self.dataset_dir = dataset_dir 
         self.info_dict = {"ID": [], "Filename": [], "Raw_WAV": [], "Frequency" : [], 
                           "TSV": [], "Clipped_WAV" : [], "Segmentations": [], 
-                          "CNN_Data": [], }
+                          "Combined_CNN_Data": [] }
         self.window = window
         self.stride = stride
 
@@ -66,11 +69,17 @@ class PatientInfo:
         
 
     def update_CNN_data(self):
-        dp = DataPreprocessing(self.info_dict["Clipped_WAV"][-1], self.info_dict["Segmentations"][-1]-1, self.info_dict["Frequency"][-1],
+        env_dp = DataPreprocessing(self.info_dict["Clipped_WAV"][-1], self.info_dict["Segmentations"][-1]-1, self.info_dict["Frequency"][-1],
                                self.window, self.stride)
-        
-        dp.extract_env_patches()
-        dp.extract_segmentation_patches()
+        upsampled_window = int(self.window * (self.info_dict["Frequency"][-1]/50))
+        upsampled_stride = int(self.stride * (self.info_dict["Frequency"][-1]/50))
 
-        self.info_dict["CNN_Data"].append(CNNData(dp.env_patches, dp.seg_patches, self.info_dict["Filename"][-1], range(0, len(dp.env_patches))))
+        stft_dp = STFT_DataPreprocessing(self.info_dict["Clipped_WAV"][-1], self.info_dict["Segmentations"][-1]-1, self.info_dict["Frequency"][-1],
+                                           upsampled_window, upsampled_stride)
         
+        env_dp.extract_env_patches()
+        env_dp.extract_segmentation_patches()
+        stft_dp.extract_wav_and_seg_patches()
+
+        self.info_dict["Combined_CNN_Data"].append(CNNData(env_dp.env_patches, env_dp.seg_patches, self.info_dict["Filename"][-1], range(0, len(env_dp.env_patches))))
+        self.info_dict["STFT_CNN_Data"].append(STFT_CNN_Data(stft_dp.stft_patches, stft_dp.output_patches, self.info_dict["Filename"][-1], range(0, len(stft_dp.stft_patches))))

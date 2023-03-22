@@ -17,31 +17,45 @@ from DataManipulation.PatientFrame import PatientFrame
 from DataManipulation.DataPresentation import DataPresentation 
 
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet
-from SegmentationCNN.Models.Envelope_CNN.PatientInfo import * 
+from PatientInfo import * 
 from SegmentationCNN.Models.Envelope_CNN.EarlyStopping import EarlyStopping
+from Envelope_Enum import * 
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
-# dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
-# csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
+# dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
+# csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
+csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
 
 data_pres = DataPresentation()
 fold_num = 1
 data_pres_folder = ""
 
-def set_up_model(window, stride):
+def set_up_model(num_envs):
     global model, optimiser, criterion 
-    model = UNet()
-    model_file = "model_weights_2016_" + str(window) + "_" + str(stride) + ".pt"
+    model = UNet(n_channels=num_envs)
+    model_file = "model_weights_2016_64_8.pt"
     model.load_state_dict(torch.load(MODEL_PATH + model_file))
     optimiser = torch.optim.Adam(model.parameters(), lr=0.0001)
     criterion = nn.CrossEntropyLoss()
+
+def make_folder_name(envelopes):
+    folder_name = ""
+    if Envelope.HOMO in envelopes:
+        folder_name += "homo_"
+    if Envelope.HILB in envelopes:
+        folder_name += "hilb_"
+    if Envelope.WAVE in envelopes:
+        folder_name += "wave_"
+    if Envelope.PSD in envelopes:
+        folder_name += "psd"
+    return folder_name
 
 
 def stratified_sample(csv_file, dataset_dir, folds=10):
     global fold_num, data_pres_folder
     pf = PatientFrame(csv_file)
     print("RUNNING")
+    # UPDATE DATA_PREPROCESSING CALL 
     patient_info = PatientInfo(dataset_dir)
     patient_info.get_data()
 
@@ -49,24 +63,24 @@ def stratified_sample(csv_file, dataset_dir, folds=10):
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1)
     fold_num = 1
 
-    windows = [128, 256, 512, 64]
-    strides = [16, 32, 64, 8]
+    env_combos = [[Envelope.HOMO], [Envelope.HILB], [Envelope.WAVE], [Envelope.PSD]]
 
-    for i in range(len(windows)):
-        patient_info = PatientInfo(dataset_dir, window=windows[i], stride=strides[i])
+    for i in range(len(env_combos)):
+        patient_info = PatientInfo(dataset_dir, window=64, stride=8)
         patient_info.get_data()
-        data_pres_folder = DATA_PRESENTATION_PATH + "/results_" + str(windows[i]) + "_" + str(strides[i]) + "/"
+        folder_name = make_folder_name(env_combos[i])
+        data_pres_folder = DATA_PRESENTATION_PATH + "/results_envelopes_" + folder_name + "/"
         fold_num = 1
         for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
             patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
             training_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_train)]
             val_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_test)]
-            cnn_results =prep_CNN(training_df, val_df, windows[i], strides[i])
-            save_results(cnn_results, "cnn", fold_num, windows[i], strides[i])
+            cnn_results =prep_CNN(training_df, val_df, len(env_combos[i]))
+            save_results(cnn_results, "cnn", fold_num, folder_name)
             fold_num += 1 
 
 
-def prep_CNN(training_df, val_df, window, stride):
+def prep_CNN(training_df, val_df, num_envs):
     train_data = ConcatDataset(training_df["CNN_Data"])
 
     validation_data = ConcatDataset(val_df["CNN_Data"])
@@ -74,10 +88,10 @@ def prep_CNN(training_df, val_df, window, stride):
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=True)
     validation_loader = DataLoader(dataset=validation_data, batch_size=1, shuffle=True)
 
-    set_up_model(window, stride)
-    return train(train_loader, validation_loader, len(validation_data), window)        
+    set_up_model(num_envs)
+    return train(train_loader, validation_loader, len(validation_data))        
 
-def train(train_loader, validation_loader, validation_size, window, epochs=15, patience=5):
+def train(train_loader, validation_loader, validation_size, epochs=15, patience=5):
     global fold_num, data_pres, data_pres_folder
     
     avg_train_loss = []
@@ -126,7 +140,7 @@ def train(train_loader, validation_loader, validation_size, window, epochs=15, p
             else: 
                 results[name[0]] = [[yhat, mean_acc, ordering]]
             
-        accuracy = correct / (validation_size * window) 
+        accuracy = correct / (validation_size * 64) 
         accuracy_list.append(accuracy)
         avg_train_loss.append(np.average(training_loss))
         avg_validation_loss.append(np.average(validation_loss))
@@ -142,8 +156,8 @@ def train(train_loader, validation_loader, validation_size, window, epochs=15, p
     return results 
         
 
-def save_results(results_dict, model, fold_num, window, stride):
-    filename = model + "_" + str(window) + "_" + str(stride) + "_results_" + str(fold_num)
+def save_results(results_dict, model, fold_num, folder_name):
+    filename = model + "_" + folder_name + "_results_" + str(fold_num)
     outfile = open(RESULTS_PATH + filename,'wb')
     pickle.dump(results_dict, outfile)
     outfile.close()

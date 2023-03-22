@@ -1,11 +1,13 @@
-# https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_model.py
+# SOURCE: https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_model.py
 
-from CNN_Parts import * 
-from DataPreprocessing import * 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F 
+import sys
 
+sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
+from SegmentationCNN.Models.Envelope_CNN.CNN_Parts import * 
+from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
 
 class UNet(nn.Module):
     def __init__(self, n_channels=4, n_classes=4, bilinear=False):
