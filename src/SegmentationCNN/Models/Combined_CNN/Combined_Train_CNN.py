@@ -18,15 +18,15 @@ from Combined_PatientInfo import *
 from SegmentationCNN.Models.STFT_CNN.STFT_GitHubUNet import STFT_UNet, init_weights
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_48"
-csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_48.csv"
+dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
+csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
 
 
 epoch_count = 0 
 
 def set_up_STFT_model():
     global stft_model, stft_optimiser, stft_criterion 
-    stft_model = STFT_UNet(n_channels=17)
+    stft_model = STFT_UNet(n_channels=15)
     stft_model.apply(init_weights)
     stft_optimiser = torch.optim.Adam(stft_model.parameters(), lr=0.0001)
     stft_criterion = nn.CrossEntropyLoss()
@@ -164,9 +164,9 @@ def train_models(env_CNN_train_loader, env_CNN_validation_loader, STFT_CNN_train
 
         for x_test, y_test, name, ordering in STFT_CNN_validation_loader:
             yhat = env_model(x_test)
-            stft_softmax = F.softmax(yhat, dim=1)
+            stft_softmax = F.softmax(yhat, dim=0)
             env_softmax = env_predictions[name][ordering]
-            combined_softmax = F.softmax(stft_softmax + env_softmax, dim=1)
+            combined_softmax = F.softmax(stft_softmax + env_softmax, dim=0)
             _, yhat = torch.max(combined_softmax, 1)
 
             for i in range(1, yhat.shape[0]): 

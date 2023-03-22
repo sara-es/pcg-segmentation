@@ -20,7 +20,7 @@ class Combined_PatientInfo:
         self.dataset_dir = dataset_dir 
         self.info_dict = {"ID": [], "Filename": [], "Raw_WAV": [], "Frequency" : [], 
                           "TSV": [], "Clipped_WAV" : [], "Segmentations": [], 
-                          "Combined_CNN_Data": [] }
+                          "Env_CNN_Data": [], "STFT_CNN_Data": []  }
         self.window = window
         self.stride = stride
 
@@ -81,5 +81,5 @@ class Combined_PatientInfo:
         env_dp.extract_segmentation_patches()
         stft_dp.extract_wav_and_seg_patches()
 
-        self.info_dict["Combined_CNN_Data"].append(CNNData(env_dp.env_patches, env_dp.seg_patches, self.info_dict["Filename"][-1], range(0, len(env_dp.env_patches))))
+        self.info_dict["Env_CNN_Data"].append(CNNData(env_dp.env_patches, env_dp.seg_patches, self.info_dict["Filename"][-1], range(0, len(env_dp.env_patches))))
         self.info_dict["STFT_CNN_Data"].append(STFT_CNN_Data(stft_dp.stft_patches, stft_dp.output_patches, self.info_dict["Filename"][-1], range(0, len(stft_dp.stft_patches))))
