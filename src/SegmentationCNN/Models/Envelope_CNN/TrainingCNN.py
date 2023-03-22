@@ -15,22 +15,25 @@ from tqdm.contrib import tzip
 sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
-
 from DataManipulation.PatientFrame import PatientFrame
+from DataManipulation.DataPresentation import DataPresentation
 
 from GitHubUNet import UNet
 
 from SegmentationHMM import train_segmentation, run_segmentation
 from PatientInfo import * 
 
-# dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_48"
-# csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
-csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_48.csv"
-# dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_5_Patients"
-# csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_5.csv"
+dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
+csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+
+# dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
+# csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
 
 epoch_count = 0 
+
+data_pres = DataPresentation()
+data_pres_folder = DATA_PRESENTATION_PATH + "/CNN_vs_HMM_Full_Data_22_03_2023/"
+fold_num = 1 
 
 def set_up_model():
     global model, optimiser, criterion 
@@ -42,6 +45,7 @@ def set_up_model():
 
 
 def stratified_sample(csv_file, dataset_dir, folds=10):
+    global fold_num 
     pf = PatientFrame(csv_file)
     print("RUNNING")
     patient_info = PatientInfo(dataset_dir)
@@ -49,7 +53,7 @@ def stratified_sample(csv_file, dataset_dir, folds=10):
 
     folds = 5
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1)
-    fold_num = 1
+    
     for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
         patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
         training_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_train)]
@@ -92,6 +96,7 @@ def train_eval_HMM(training_df, val_df):
 
 
 def train(train_loader, validation_loader, validation_size, epochs=15, patience=5):
+    global data_pres_folder, fold_num 
     
     avg_train_loss = []
     avg_validation_loss = [] 
@@ -125,7 +130,7 @@ def train(train_loader, validation_loader, validation_size, epochs=15, patience=
             loss = criterion(torch.t(z), y_test[0])
             validation_loss.append(loss.item())
 
-            softmax = F.softmax(z, dim=1)
+            softmax = F.softmax(z, dim=0)
             _, yhat = torch.max(softmax, 0)
         
             for i in range(1, yhat.shape[0]): 
@@ -151,7 +156,7 @@ def train(train_loader, validation_loader, validation_size, epochs=15, patience=
             break
 
     print("HERE")
-    plot_loss_and_accuracy(avg_validation_loss, avg_train_loss, accuracy_list)
+    data_pres.plot_loss_and_accuracy(avg_train_loss, avg_validation_loss, accuracy_list, data_pres_folder, fold_num)
     return results 
         
 
@@ -172,14 +177,14 @@ def plot_loss_and_accuracy(valid_loss, train_loss, accuracy):
     ax1.grid()
     ax2.grid()
     ax3.grid()
-    fig_name = DATA_PRESENTATION_PATH + "Loss VS Accuracy" + str(epoch_count)
+    fig_name = DATA_PRESENTATION_PATH + "Loss VS Accuracy_22_03_23__" + str(epoch_count)
     print(fig_name)
     plt.savefig(fig_name)
     
     epoch_count += 1
 
 def save_results(results_dict, model, fold_num):
-    outfile = open(RESULTS_PATH + model+ "_results_" + str(fold_num),'wb')
+    outfile = open(RESULTS_PATH + model+ "_results_22_03_23__" + str(fold_num),'wb')
     pickle.dump(results_dict, outfile)
     outfile.close()
 
