@@ -17,7 +17,7 @@ class DataPreprocessing:
 
     DOWNSAMPLE_FREQUENCY = 50 
 
-    def __init__(self, wav, segmentation_array, fs, window=64, stride=8,
+    def __init__(self, wav, segmentation_array, fs, window=128, stride=16,
                   envelopes=[Envelope.HOMO, Envelope.HILB, Envelope.WAVE, Envelope.PSD]):
         self.wav = wav
         self.segmentation_array = segmentation_array
@@ -31,7 +31,7 @@ class DataPreprocessing:
 
     def set_envelopes(self, envelopes):
         spike_rem_signal = self.get_spike_rem_signal()
-        self.homo_env, self.hilb_env, self.wave_env, self.psd_env = [], [], [], []
+        self.homo_env, self.hilb_env, self.wave_env, self.power_spec_env = [], [], [], []
         self.combined_envs = []
         if Envelope.HOMO in envelopes:
             self.set_homo_env(spike_rem_signal)
@@ -44,8 +44,9 @@ class DataPreprocessing:
             self.combined_envs.append(self.wave_env)
         if Envelope.PSD in envelopes:
             self.set_psd_env(spike_rem_signal)
-            self.combined_envs.append(self.psd_env)
+            self.combined_envs.append(self.power_spec_env)
         self.combined_envs = np.array(self.combined_envs)
+    
 
         
     def set_homo_env(self, spike_rem_signal):
@@ -64,9 +65,14 @@ class DataPreprocessing:
                                 self.downsample_envelope(self.wave_env, self.sampling_frequency, self.DOWNSAMPLE_FREQUENCY))
         
     def set_psd_env(self, spike_rem_signal):
+        homo_env = self.get_homomorphic_envelope(spike_rem_signal)
+        homo_env = self.normalise_envelope(
+                                self.downsample_envelope(homo_env, self.sampling_frequency, self.DOWNSAMPLE_FREQUENCY))
+        
         self.power_spec_env = self.get_power_spectral_density_envelope(spike_rem_signal)
         self.power_spec_env = self.normalise_envelope(
-                                self.downsample_envelope(self.power_spec_env, (1+1e-9), self.homo_env.shape[0]/len(self.power_spec_env)))
+                                self.downsample_envelope(self.power_spec_env, (1+1e-9), homo_env.shape[0]/len(self.power_spec_env)))
+        
 
 
     def get_spike_rem_signal(self):
@@ -111,7 +117,7 @@ class DataPreprocessing:
         cD, cA = getDWT.getDWT(signal, wavelet_level, wavelet_name)
 
         wavelet_feature = abs(cD[wavelet_level - 1, :])
-        wavelet_feature = wavelet_feature[:len(self.homo_env)]
+        wavelet_feature = wavelet_feature[:len(self.get_homomorphic_envelope(signal))]
 
         return wavelet_feature 
 

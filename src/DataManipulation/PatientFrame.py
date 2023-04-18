@@ -41,11 +41,13 @@ class PatientFrame():
     def get_patients_with_murmur_status(self, status):
         return (self.patient_frame.loc[self.patient_frame['Murmur'] == status])["Patient ID"]
 
+    def get_murmur_status_by_patient(self, patientID):
+        return (self.patient_frame.loc[self.patient_frame['Patient ID'].isin(patientID)])["Murmur"]
+
     def create_dataset_dir_from_IDs(self):
         dir = DATA_PATH + "DataSubset_" + str(len(self))
         os.mkdir(dir)
         for id in self.patient_frame["Patient ID"]:
-            DATA_PATH
             files = glob.glob(TRAINING_DATA_PATH_2022 + "training_data/" + str(id) + "_*")
             for f in files:
                 shutil.copy(f, dir)

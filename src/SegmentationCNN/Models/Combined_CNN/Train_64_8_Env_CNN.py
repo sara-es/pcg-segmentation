@@ -17,66 +17,48 @@ from DataManipulation.PatientFrame import PatientFrame
 from DataManipulation.DataPresentation import DataPresentation 
 
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet, init_weights
-from PatientInfo import * 
-from SegmentationCNN.Models.Envelope_CNN.EarlyStopping import EarlyStopping
-from Envelope_Enum import * 
+from SegmentationCNN.Models.Envelope_CNN.PatientInfo import * 
 
 dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
 csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
-# dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
-# csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
 
 data_pres = DataPresentation()
 fold_num = 1
 data_pres_folder = ""
 
-def set_up_model(num_envs):
+def set_up_model():
     global model, optimiser, criterion 
-    model = UNet(n_channels=num_envs)
+    model = UNet()
     model.apply(init_weights)
     optimiser = torch.optim.Adam(model.parameters(), lr=0.0001)
     criterion = nn.CrossEntropyLoss()
 
-def make_folder_name(envelopes):
-    folder_name = []
-    if Envelope.HOMO in envelopes:
-        folder_name.append("homo")
-    if Envelope.HILB in envelopes:
-        folder_name.append("hilb")
-    if Envelope.WAVE in envelopes:
-        folder_name.append("wave")
-    if Envelope.PSD in envelopes:
-        folder_name.append("psd")
-    return "_".join(folder_name)
 
-
-def stratified_sample(csv_file, dataset_dir, folds=10):
+def stratified_sample(csv_file, dataset_dir, folds=5):
     global fold_num, data_pres_folder
     pf = PatientFrame(csv_file)
     print("RUNNING")
+    patient_info = PatientInfo(dataset_dir)
+    patient_info.get_data()
 
-    folds = 5
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1)
+
+    patient_info = PatientInfo(dataset_dir, window=64, stride=8)
+    patient_info.get_data()
+    data_pres_folder = DATA_PRESENTATION_PATH + "results_30_03_2023_64_8_env_CNN_for_ensemble/"
     fold_num = 1
-
-    # env_combos = [[Envelope.HOMO], [Envelope.HILB], [Envelope.WAVE], [Envelope.PSD]]
-    env_combos = [[Envelope.HOMO, Envelope.HILB, Envelope.PSD]]
-    for i in range(len(env_combos)):
-        patient_info = PatientInfo(dataset_dir, envelopes=env_combos[i])
-        patient_info.get_data()
-        folder_name = make_folder_name(env_combos[i])
-        data_pres_folder = DATA_PRESENTATION_PATH + "results_envelopes_" + folder_name + "/"
-        fold_num = 1
-        for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
-            patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
-            training_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_train)]
-            val_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_test)]
-            cnn_results =prep_CNN(training_df, val_df, len(env_combos[i]))
-            save_results(cnn_results, "cnn", fold_num, folder_name)
-            fold_num += 1 
+    for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
+        patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
+        training_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_train)]
+        val_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_test)]
+        cnn_results =prep_CNN(training_df, val_df  )
+        save_results(cnn_results, "env_cnn_for_ensemble_64_8", fold_num)
+        save_model(fold_num)
+        fold_num += 1 
+        
 
 
-def prep_CNN(training_df, val_df, num_envs):
+def prep_CNN(training_df, val_df):
     train_data = ConcatDataset(training_df["CNN_Data"])
 
     validation_data = ConcatDataset(val_df["CNN_Data"])
@@ -84,7 +66,7 @@ def prep_CNN(training_df, val_df, num_envs):
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=True)
     validation_loader = DataLoader(dataset=validation_data, batch_size=1, shuffle=True)
 
-    set_up_model(num_envs)
+    set_up_model()
     return train(train_loader, validation_loader, len(validation_data))        
 
 def train(train_loader, validation_loader, validation_size, epochs=15, patience=5):
@@ -93,12 +75,10 @@ def train(train_loader, validation_loader, validation_size, epochs=15, patience=
     avg_train_loss = []
     avg_validation_loss = [] 
 
-    early_stopping = EarlyStopping(patience=patience, verbose=True)
-
     accuracy_list = [] 
     model.train(True)
 
-    epochs = 20 
+    epochs = 6
 
     for epoch in range(epochs):
         training_loss = [] 
@@ -136,28 +116,24 @@ def train(train_loader, validation_loader, validation_size, epochs=15, patience=
             else: 
                 results[name[0]] = [[yhat, mean_acc, ordering]]
             
-        accuracy = correct / (validation_size * 128) 
+        accuracy = correct / (validation_size * 64) 
         accuracy_list.append(accuracy)
         avg_train_loss.append(np.average(training_loss))
         avg_validation_loss.append(np.average(validation_loss))
-
-        # early_stopping(np.average(validation_loss), model)
-        
-        # if early_stopping.early_stop:
-        #     print("Early stopping")
-        #     break
 
     print("HERE")
     data_pres.plot_loss_and_accuracy(avg_train_loss, avg_validation_loss, accuracy_list, data_pres_folder, fold_num)
     return results 
         
 
-def save_results(results_dict, model, fold_num, folder_name):
-    filename = model + "_" + folder_name + "_results_" + str(fold_num)
+def save_results(results_dict, model, fold_num):
+    filename = model + "_results_30_03_2023_" + str(fold_num)
     outfile = open(RESULTS_PATH + filename,'wb')
     pickle.dump(results_dict, outfile)
     outfile.close()
 
-
+def save_model(fold_num):
+    global model
+    torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2022_env_cnn_for_ensemble_64_8_" + str(fold_num) + ".pt")
 
 stratified_sample(csv_file, dataset_dir)

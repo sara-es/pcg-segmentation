@@ -1,14 +1,14 @@
 import os 
 from tqdm import tqdm
 
-from STFT_DataPreprocessing import STFT_DataPreprocessing
-from STFT_CNN_Data import STFT_CNN_Data
 import scipy as sp
 import pandas as pd 
 import sys 
 
 sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.create_segmentation_array import *
+from SegmentationCNN.Models.STFT_CNN.STFT_DataPreprocessing import *
+from SegmentationCNN.Models.STFT_CNN.STFT_CNN_Data import *
 
 class PatientInfo_STFT: 
 

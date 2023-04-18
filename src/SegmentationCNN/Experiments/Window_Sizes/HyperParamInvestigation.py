@@ -16,7 +16,7 @@ from DataManipulation.PatientFrame import *
 from DataManipulation.PatientFrame import PatientFrame
 from DataManipulation.DataPresentation import DataPresentation 
 
-from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet
+from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet, init_weights
 from SegmentationCNN.Models.Envelope_CNN.PatientInfo import * 
 from SegmentationCNN.Models.Envelope_CNN.EarlyStopping import EarlyStopping
 
@@ -33,7 +33,8 @@ def set_up_model(window, stride):
     global model, optimiser, criterion 
     model = UNet()
     model_file = "model_weights_2016_" + str(window) + "_" + str(stride) + ".pt"
-    model.load_state_dict(torch.load(MODEL_PATH + model_file))
+    # model.load_state_dict(torch.load(MODEL_PATH + model_file))
+    model.apply(init_weights)
     optimiser = torch.optim.Adam(model.parameters(), lr=0.0001)
     criterion = nn.CrossEntropyLoss()
 
@@ -49,21 +50,27 @@ def stratified_sample(csv_file, dataset_dir, folds=10):
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1)
     fold_num = 1
 
-    windows = [128, 256, 512, 64]
-    strides = [16, 32, 64, 8]
+    windows = [64]
+    strides = [8]
 
     for i in range(len(windows)):
         patient_info = PatientInfo(dataset_dir, window=windows[i], stride=strides[i])
         patient_info.get_data()
-        data_pres_folder = DATA_PRESENTATION_PATH + "/results_" + str(windows[i]) + "_" + str(strides[i]) + "/"
+        data_pres_folder = DATA_PRESENTATION_PATH + "results_26_03_2023_" + str(windows[i]) + "_" + str(strides[i]) + "/"
         fold_num = 1
         for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
+            if fold_num < 3:
+                fold_num += 1
+                print("SKIPPING")
+                continue
             patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
             training_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_train)]
             val_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_test)]
             cnn_results =prep_CNN(training_df, val_df, windows[i], strides[i])
-            save_results(cnn_results, "cnn", fold_num, windows[i], strides[i])
+            # save_results(cnn_results, "cnn", fold_num, windows[i], strides[i])
+            save_model(fold_num, windows[i], strides[i])
             fold_num += 1 
+            break
 
 
 def prep_CNN(training_df, val_df, window, stride):
@@ -143,11 +150,13 @@ def train(train_loader, validation_loader, validation_size, window, epochs=15, p
         
 
 def save_results(results_dict, model, fold_num, window, stride):
-    filename = model + "_" + str(window) + "_" + str(stride) + "_results_" + str(fold_num)
+    filename = model + "_" + str(window) + "_" + str(stride) + "_results_26_03_2023_" + str(fold_num)
     outfile = open(RESULTS_PATH + filename,'wb')
     pickle.dump(results_dict, outfile)
     outfile.close()
 
-
+def save_model(fold_num, window, stride):
+    global model
+    torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2022_env_cnn_" + str(window) + "_" + str(stride) + "_" + str(fold_num) + ".pt")
 
 stratified_sample(csv_file, dataset_dir)

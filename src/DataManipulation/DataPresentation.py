@@ -6,9 +6,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math 
 import wave
+import os 
+import scipy as sp 
+from scipy.fft import fft
+from scipy import fftpack
+from scipy.signal import stft 
 
 import seaborn as sn
 import pandas as pd
+
+from Utilities.create_segmentation_array import * 
 
 class DataPresentation:
 
@@ -69,6 +76,27 @@ class DataPresentation:
             if len(np.array(axs).shape) > 1:
                 fig.delaxes(axs[-1][-1])
         plt.savefig(DATA_PRESENTATION_PATH + str(patient_num) + "_audio_plots")
+
+    def plot_signal(self, signal, title):
+        homo_col = "#CA03BA"
+        hilb_col = "#4E46FF"
+        wav_col = "#0D712B"
+        psd_col = "#E67F35"
+    
+        fig, axs = plt.subplots(nrows=1, ncols=1, constrained_layout = True)
+        fig.set_size_inches(self.fig_width, self.fig_row_height)
+        time = np.linspace(0, 19.35, num=len(signal))
+        axs.set_title(title, fontsize=self.subtitle_size)
+        axs.plot(time, signal, color=self.colour_scheme[0])
+        axs.grid()
+        axs.set_ylabel("Amplitude", fontsize=self.ax_size)
+        axs.set_xlabel("Time (Seconds)", fontsize=self.ax_size)
+        axs.tick_params(axis='x', labelsize=self.ax_size)
+        axs.tick_params(axis='y', labelsize=self.ax_size)
+        axs.set_xlim(left=0, right=20)
+        axs.set_ylim(bottom=-8000, top=8000)
+        plt.savefig(DATA_PRESENTATION_PATH + title.replace(" ", "_"))
+
 
     def plot_patient_audio_file_with_fhs_locs(self, patient_num, wav_file, fhs_locs):
         fig, ax = plt.subplots()
@@ -181,5 +209,219 @@ class DataPresentation:
         ax3.grid()
 
         plt.savefig(data_pres_folder + "Loss VS Accuracy"  + str(fold_num))
+
+    def plot_patient_fft(self, patient_ID):
+        fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH_2022 + "training_data/", patient_ID + ".wav"))
+        tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + patient_ID + ".tsv", delimiter="\t")
+        clipped_recording, segmentations = create_segmentation_array(recording,
+                                                                            tsv,
+                                                                            recording_frequency=4000,
+                                                                            feature_frequency=4000)
+
+        fourier = fft(clipped_recording[0])
+        n = len(clipped_recording[0])
+        timestep = 1/fs
+        freq = np.fft.fftfreq(n, d=timestep)
+        print(np.max(np.abs(fourier)))
+
+        fig, ax = plt.subplots()
+        fig.set_size_inches(self.fig_width, self.fig_row_height)
+        # ax.plot(np.abs(fft_recording), color=self.colour_scheme[0])
+        ax.set_xlabel("Frequency (Hz)")
+        ax.set_ylabel("Magnitude")
+        ax.set_title("Fast Fourier Transform of " + patient_ID)
+        ax.grid()
+        ax.set_xlim(left=0, right=700)
+        ax.plot(freq[:int(n/2)], np.abs(fourier[:int(n/2)])/3388, color=self.colour_scheme[0])
+
+        plt.savefig(DATA_PRESENTATION_PATH + "FFT_" + patient_ID)
+
+    def plot_patient_stft(self, patient_ID):
+        fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH_2022 + "training_data/", patient_ID + ".wav"))
+        tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + patient_ID + ".tsv", delimiter="\t")
+        clipped_recording, segmentations = create_segmentation_array(recording,
+                                                                            tsv,
+                                                                            recording_frequency=4000,
+                                                                            feature_frequency=4000)
+
+        f, t, Zxx = stft(clipped_recording[0], fs=fs, nperseg=576, noverlap=504)
+        print(np.max(np.abs(Zxx)))
+        
+        fig, ax = plt.subplots()
+        fig.set_size_inches(self.fig_width, self.fig_row_height)
+        # ax.plot(np.abs(fft_recording), color=self.colour_scheme[0])
+        ax.set_xlabel("Frequency (Hz)")
+        ax.set_ylabel('Magnitude')
+        ax.set_title("Fast Fourier Transform taken at Windows From " + patient_ID)
+        ax.grid()
+
+        
+        # ax.set_ylim(-0.1, 600)
+        ax.plot(np.abs(Zxx))
+
+
+
+        # pxx, freq, t, cax = ax.specgram(clipped_recording[0], # first channel
+        #                         Fs=fs,      # to get frequency axis in Hz
+        #                         vmin=-40)
+        # cbar = fig.colorbar(cax)
+        # cbar.set_label('Intensity (dB)')
+        # ax.axis("tight")
+
+
+
+        plt.savefig(DATA_PRESENTATION_PATH + "STFT_2_" + patient_ID)
+
+
+    def plot_STFT_shorter_window(self, patient_ID):
+        fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH_2022 + "training_data/", patient_ID + ".wav"))
+        tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + patient_ID + ".tsv", delimiter="\t")
+        clipped_recording, segmentations = create_segmentation_array(recording, tsv,
+                                                                        recording_frequency=4000,
+                                                                        feature_frequency=4000)
+
+        for i in range(3):
+            patch = clipped_recording[0][i*640:(i*640)+5120]
+            f, t, Zxx = stft(patch, fs=fs, nperseg=576, noverlap=504, boundary=None, padded=False)
+            plt.plot(np.abs(Zxx))
+            plt.show()
+            shortened_Zxx = Zxx[:150, :]
+            plt.plot(np.abs(shortened_Zxx))
+            plt.show()
+            results = [] 
+            print(shortened_Zxx)
+            for i in range(0, len(shortened_Zxx), 20):
+                mean = np.mean(shortened_Zxx[i:i+20, :], axis=0)
+                results.append(np.abs(mean))
+            plt.plot(results)
+            plt.show()
+
+
+    def plot_PCG_HMM_vs_CNN_segmentations(self, patient_ID, results_dir, signal, true_segmentation, cnn_seg, hmm_seg, clip=True):
+
+        time_4000 = np.linspace(0, len(signal) / 4000, num=len(signal))
+
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=4, sharex=True)
+        fig.set_size_inches(16, 8)
+        fig.subplots_adjust(hspace=0)
+        
+        if clip: 
+            ax1.plot(time_4000[:40000], signal[:40000], color=self.colour_scheme[0])        
+            ax2.plot(time_4000[:40000], true_segmentation[:40000], color=self.colour_scheme[1])     
+            ax3.plot(time_4000[:40000], cnn_seg[:40000], color=self.colour_scheme[1])
+            ax4.plot(time_4000[:40000], hmm_seg[:40000], color=self.colour_scheme[1])
+        else: 
+            ax1.plot(time_4000, signal, color=self.colour_scheme[0])        
+            ax2.plot(time_4000, true_segmentation, color=self.colour_scheme[1])     
+            ax3.plot(time_4000, cnn_seg, color=self.colour_scheme[1])
+            ax4.plot(time_4000, hmm_seg, color=self.colour_scheme[1])
+    
+        start, end = ax1.get_xlim()
+        ax1.xaxis.set_ticks(np.arange(0, end, 1))
+        ax2.xaxis.set_ticks(np.arange(0, end, 1))
+        ax3.xaxis.set_ticks(np.arange(0, end, 1))
+
+        ax1.grid()
+        ax2.grid()
+        ax3.grid()
+        ax4.grid()
+        ax1.set_title("Plot of PCG recording and segmentations for " + patient_ID)
+
+        ax3.set_xlabel("Time (Seconds)")
+        ax1.set_ylabel("PCG Recording")
+        ax2.set_ylabel("True Segmentations")
+        ax3.set_ylabel("Env Segmentations")
+        ax4.set_ylabel("STFT Segmentations")
+
+        plt.savefig(results_dir + patient_ID + "_True_VS_CNN_VS_HSMM")   
+        plt.cla()
+        plt.clf()   
+
+
+    
+    def plot_PCG_segmentations(self, patient_ID, results_dir, signal, true_segmentation, predicted_segmentation, clip=True):
+
+        time_4000 = np.linspace(0, len(signal) / 4000, num=len(signal))
+
+        fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, sharex=True)
+        fig.set_size_inches(16, 8)
+        fig.subplots_adjust(hspace=0)
+        
+        if clip: 
+            ax1.plot(time_4000[:40000], signal[:40000], color=self.colour_scheme[0])        
+            ax2.plot(time_4000[:40000], true_segmentation[:40000], color=self.colour_scheme[1])     
+            ax3.plot(time_4000[:40000], predicted_segmentation[:40000], color=self.colour_scheme[1])
+        else: 
+            ax1.plot(time_4000, signal, color=self.colour_scheme[0])        
+            ax2.plot(time_4000, true_segmentation, color=self.colour_scheme[1])     
+            ax3.plot(time_4000, predicted_segmentation, color=self.colour_scheme[1])
+        start, end = ax1.get_xlim()
+        ax1.xaxis.set_ticks(np.arange(0, end, 1))
+        ax2.xaxis.set_ticks(np.arange(0, end, 1))
+        ax3.xaxis.set_ticks(np.arange(0, end, 1))
+
+        ax1.grid()
+        ax2.grid()
+        ax3.grid()
+
+        ax1.set_title("Plot of PCG recording and segmentations for " + patient_ID)
+
+
+        ax3.set_xlabel("Time (Seconds)")
+        ax1.set_ylabel(" PCG Recording")
+        ax2.set_ylabel("True Segmentations")
+        ax3.set_ylabel("Predicted Segmentations")
+
+        plt.savefig(results_dir + patient_ID + "_True_VS_CNN")   
+        plt.cla()
+        plt.clf()   
+
+    def plot_PCG_HMM_vs_CNN_vs_STFT_segmentations(self, patient_ID, results_dir, signal, true_segmentation, 
+                                                  hmm_seg, cnn_seg, stft_seg, clip=True):
+        time_4000 = np.linspace(0, len(signal) / 4000, num=len(signal))
+
+        fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(nrows=5, sharex=True)
+        fig.set_size_inches(16, 8)
+        fig.subplots_adjust(hspace=0)
+
+        if clip: 
+            ax1.plot(time_4000[20000:60000], signal[20000:60000], color=self.colour_scheme[0])        
+            ax2.plot(time_4000[20000:60000], true_segmentation[20000:60000], color=self.colour_scheme[1])     
+            ax3.plot(time_4000[20000:60000], hmm_seg[20000:60000], color=self.colour_scheme[1])
+            ax4.plot(time_4000[20000:60000], cnn_seg[20000:60000], color=self.colour_scheme[1])
+            ax5.plot(time_4000[20000:60000], stft_seg[20000:60000], color=self.colour_scheme[1])
+        else: 
+            ax1.plot(time_4000, signal, color=self.colour_scheme[0])        
+            ax2.plot(time_4000, true_segmentation, color=self.colour_scheme[1])     
+            ax3.plot(time_4000, hmm_seg, color=self.colour_scheme[1])
+            ax4.plot(time_4000, cnn_seg, color=self.colour_scheme[1])
+            ax5.plot(time_4000, stft_seg, color=self.colour_scheme[1])
+    
+        start, end = ax1.get_xlim()
+        ax1.xaxis.set_ticks(np.arange(5, end, 1))
+        ax2.xaxis.set_ticks(np.arange(5, end, 1))
+        ax3.xaxis.set_ticks(np.arange(5, end, 1))
+
+        ax1.grid()
+        ax2.grid()
+        ax3.grid()
+        ax4.grid()
+        ax5.grid()
+        ax1.set_title("Plot of PCG recording and segmentations for " + patient_ID)
+
+        ax3.set_xlabel("Time (Seconds)")
+        ax1.set_ylabel("PCG Recording")
+        ax2.set_ylabel("True Segmentations")
+        ax3.set_ylabel("HSMM Segmentations")
+        ax4.set_ylabel("Env Segmentations")
+        ax5.set_ylabel("STFT Segmentations")
+
+        plt.savefig(results_dir + patient_ID + "_True_VS_CNN_VS_HSMM_VS_STFT")   
+        plt.cla()
+        plt.clf()   
+
+
+
+    
 
 

@@ -7,19 +7,18 @@ from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 
 import sys 
-import matplotlib.pyplot as plt 
 from sklearn.model_selection import StratifiedKFold
 
 sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
 from DataManipulation.PatientFrame import PatientFrame
-from STFT_PatientInfo import * 
-from STFT_GitHubUNet import STFT_UNet, init_weights
+from SegmentationCNN.Models.STFT_CNN.STFT_PatientInfo import * 
+from SegmentationCNN.Models.STFT_CNN.STFT_GitHubUNet import STFT_UNet, init_weights
+
 
 dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
 csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
-model_weights = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/stft_model_weights_2016_64_8_5_epoch.pt"
 
 epoch_count = 0 
 
@@ -45,11 +44,10 @@ def stratified_sample(csv_file, dataset_dir, folds=10):
         training_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_train)]
         val_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_test)]
         cnn_results, avg_validation_loss, avg_train_loss, accuracy_list =prep_CNN(training_df, val_df)
-        save_results(cnn_results, "stft_cnn_", fold_num)
-        save_epoch_stats(avg_validation_loss, avg_train_loss, accuracy_list, "stft_cnn", fold_num)
+        save_results(cnn_results, "stft_cnn_for_ensemble_64_8", fold_num)
+        save_epoch_stats(avg_validation_loss, avg_train_loss, accuracy_list, "stft_cnn_for_ensemble_64_8", fold_num)
         save_model(fold_num)
         fold_num += 1 
-        break
 
 
 def prep_CNN(training_df, val_df):
@@ -128,41 +126,18 @@ def train(train_loader, validation_loader, validation_size, epochs=15):
     return results, avg_validation_loss, avg_train_loss, accuracy_list
         
 
-def plot_loss_and_accuracy(valid_loss, train_loss, accuracy):
-    global epoch_count
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
-    fig.set_size_inches(18, 10)
-    fig.suptitle('Model Loss VS Accuracy Across Epochs', fontsize=12)
-    ax1.plot(train_loss)
-    ax2.plot(valid_loss)
-    ax3.plot(accuracy)
-    ax1.set_ylabel("Training Loss")
-    ax2.set_ylabel("Validation Loss")
-    ax3.set_ylabel("Accuracy")
-    ax1.set_xlabel("Epochs")
-    ax2.set_xlabel("Epochs")
-    ax3.set_xlabel("Epochs")
-    ax1.grid()
-    ax2.grid()
-    ax3.grid()
-    fig_name = DATA_PRESENTATION_PATH + "Loss_VS_Accuracy_STFT" + str(epoch_count)
-    print(fig_name)
-    plt.savefig(fig_name)
-    
-    epoch_count += 1
-
 def save_results(results_dict, model, fold_num):
     outfile = open(RESULTS_PATH + model+ "results_" + str(fold_num),'wb')
     pickle.dump(results_dict, outfile)
     outfile.close()
 
 def save_epoch_stats(avg_validation_loss, avg_train_loss, accuracy_list, model, fold_num):
-    f = RESULTS_PATH + model+ "_epoch_results_" + model + "_26_03_2023_" + str(fold_num)
+    f = RESULTS_PATH + model+ "_epoch_results_" + model + "_30_03_2023_" + str(fold_num)
     np.savetxt(f, (avg_validation_loss, avg_train_loss, accuracy_list), delimiter=',')  
 
 def save_model(fold_num):
     global model
-    torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2022_stft_cnn_" + str(fold_num) + ".pt")
+    torch.save(model.state_dict(),"/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2022_stft_cnn_for_ensemble_64_8_" + str(fold_num) + ".pt")
 
     
 

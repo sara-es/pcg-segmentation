@@ -34,15 +34,22 @@ class STFT_DataPreprocessing:
         self.stft_patches = np.array(self.stft_patches)
         self.output_patches = np.array(self.output_patches)
 
+    def extract_wav_patches_only(self):
+        for i in range(0, len(self.wav), self.STRIDE):
+            padding = i+self.PATCH_SIZE - len(self.wav)
+            if i+self.PATCH_SIZE >= len(self.wav):
+                self.wav = np.pad(self.wav, pad_width=(0,padding), mode="constant", constant_values=(0))
+            wav_patch = self.wav[i:i+self.PATCH_SIZE]
+            self.extract_stft_patches(wav_patch)
+        self.stft_patches = np.array(self.stft_patches)
+
 
     def extract_stft_patches(self, patch):
-        # D =librosa.stft(np.array(patch, dtype=np.float64), n_fft=576, hop_length=72, window="hann", center=False)
         f, t, Zxx = stft(patch, fs=self.sampling_frequency, nperseg=576, noverlap=504, boundary=None, padded=False)
-        # f, t, Zxx = stft(patch, fs=self.sampling_frequency, nperseg=590, noverlap=512, boundary=None, padded=False)
-
         shortened_Zxx = Zxx[:150, :]
+
         results = [] 
-        for i in range(0, len(shortened_Zxx), 10):
+        for i in range(0, len(shortened_Zxx), 20):
             mean = np.mean(shortened_Zxx[i:i+10, :], axis=0)
             results.append(np.abs(mean))
         self.stft_patches.append(results)
