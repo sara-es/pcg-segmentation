@@ -1,18 +1,17 @@
-import sys 
-import math 
-import os 
-import scipy as sp
-import pickle
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..'))
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
+import math 
+import scipy as sp
+
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import * 
 from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
 from Utilities.create_segmentation_array import *
 from Utilities.prediction_helper_functions import * 
 from DataManipulation.DataPresentation import * 
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-model_path = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/Demos/Env_CNN/model_weights_2022_env_cnn_128_16_5.pt"
+dataset_dir = TRAINING_DATA_PATH
+model_path = os.path.join(MODEL_PATH, "model_weights_2022_env_cnn_128_16_5.pt")
 
 def get_wav_and_tsv(patient_name):
     fs, recording = sp.io.wavfile.read(os.path.join(dataset_dir, patient_name + ".wav"))
@@ -55,7 +54,7 @@ files = ["84996_TV", "50029_PV", "49653_MV"]
 
 dp = DataPresentation()
 
-results_dir = "/Users/serenahuston/GitRepos/ThirdYearProject/DataPresentation/SegmentationModelPerformance/Demos/Env_CNN/"
+results_dir = os.path.join(RESULTS_PATH, "env_cnn")
 for file in files:
     wav, true_seg, fs = get_wav_and_tsv(file)
     predict_seg = make_prediction(wav, fs, model_path, window=128, stride=16)

@@ -1,18 +1,18 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import numpy as np
 import scipy as sp
 import math 
-import sys 
 import librosa 
-import os 
 import matplotlib.pyplot as plt 
 from librosa import resample
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities import constants
 
 f= "29045_MV"
 
-fs, recording = sp.io.wavfile.read(os.path.join(constants.TRAINING_DATA_PATH_2022, "training_data/", (f+".wav")))
+fs, recording = sp.io.wavfile.read(os.path.join(constants.TRAINING_DATA_PATH, "training_data/", (f+".wav")))
 
 #extract the maximum signal
 maximum_signal = max(np.abs(recording))

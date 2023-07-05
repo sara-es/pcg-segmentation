@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import numpy as np 
 import pickle
 import torch 
@@ -12,7 +15,6 @@ from sklearn.model_selection import StratifiedKFold
 from EarlyStopping import EarlyStopping
 from tqdm.contrib import tzip
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
 from DataManipulation.PatientFrame import PatientFrame
@@ -23,8 +25,8 @@ from GitHubUNet import UNet
 from SegmentationHMM import train_segmentation, run_segmentation
 from PatientInfo import * 
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+dataset_dir = TRAINING_DATA_PATH
+csv_file = DATA_CSV_PATH
 
 # dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
 # csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"

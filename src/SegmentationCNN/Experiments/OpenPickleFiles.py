@@ -1,29 +1,29 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..'))
+
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-import sys 
 import statistics
 import scipy as sp
-import os 
 from librosa import resample 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from DataManipulation.DataPresentation import * 
 from DataManipulation.PatientFrame import PatientFrame
 from Utilities.create_segmentation_array import *
 from Utilities.constants import *
 
-csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+csv_file = DATA_CSV_PATH
 
 PATCH_SIZE = 64
 STRIDE = 8
 
 def plot_sound_and_segmentations(file_root, hmm_segmentations, cnn_segmentations):
     
-    fs, recording = sp.io.wavfile.read(TRAINING_DATA_PATH_2022 + "training_data/"+ file_root + ".wav")
+    fs, recording = sp.io.wavfile.read(TRAINING_DATA_PATH + file_root + ".wav")
 
-    tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + file_root + ".tsv", delimiter="\t")
+    tsv = np.loadtxt(TRAINING_DATA_PATH + file_root + ".tsv", delimiter="\t")
 
     clipped_recording, segmentations = create_segmentation_array(recording,
                                                                 tsv,
@@ -140,8 +140,8 @@ def build_metric_dict(confusion_mat):
 
 def get_true_segmentations(file):
     patientID = file.split(".")[0]
-    fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH_2022 + "training_data/", file))
-    tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + patientID + ".tsv", delimiter="\t")
+    fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH, file))
+    tsv = np.loadtxt(TRAINING_DATA_PATH + patientID + ".tsv", delimiter="\t")
     clipped_recording, segmentations = create_segmentation_array(recording,
                                                                     tsv,
                                                                     recording_frequency=4000,
@@ -196,9 +196,9 @@ hmm_confusion_mat_all_classes = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
 
 
 for i in range(1, 6):
-    with open('/Users/serenahuston/GitRepos/ThirdYearProject/Results/Full_Dataset_Results_20_02_2023/cnn_results_'+str(i), 'rb') as f:
+    with open('/Results/Full_Dataset_Results_20_02_2023/cnn_results_'+str(i), 'rb') as f:
         cnn_results = pickle.load(f)
-    with open('/Users/serenahuston/GitRepos/ThirdYearProject/Results/Full_Dataset_Results_20_02_2023/hmm_results_'+str(i), 'rb') as f:
+    with open('/Results/Full_Dataset_Results_20_02_2023/hmm_results_'+str(i), 'rb') as f:
         hmm_results = pickle.load(f)
 
 

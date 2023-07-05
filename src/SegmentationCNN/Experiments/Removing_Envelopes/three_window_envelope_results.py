@@ -1,9 +1,10 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import pickle 
 import numpy as np 
 import statistics 
-import sys 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from DataManipulation.DataPresentation import * 
 from Utilities.create_segmentation_array import *
 from Utilities.constants import *
@@ -12,7 +13,7 @@ from SegmentationCNN.Experiments.performance_metrics import *
 from SegmentationCNN.Experiments.Removing_Envelopes.DataPreprocessing import * 
 from SegmentationCNN.Experiments.Removing_Envelopes.Envelope_Enum import * 
 
-RESULTS_PATH = '/Users/serenahuston/GitRepos/ThirdYearProject/Results/Envelope_Experiments/'
+RESULTS_PATH = '/Results/Envelope_Experiments/'
 ENVELOPES = [Envelope.HOMO, Envelope.HILB, Envelope.PSD]
 WINDOW = 128
 STRIDE = 16

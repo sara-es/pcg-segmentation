@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import numpy as np 
 import pickle
 import torch 
@@ -6,11 +9,8 @@ import torch.nn.functional as F
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 
-import sys 
 from sklearn.model_selection import StratifiedKFold
 
-
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
 from DataManipulation.PatientFrame import PatientFrame
@@ -20,8 +20,8 @@ from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet, init_weights
 from SegmentationCNN.Models.Envelope_CNN.PatientInfo import * 
 from SegmentationCNN.Models.Envelope_CNN.EarlyStopping import EarlyStopping
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+dataset_dir = TRAINING_DATA_PATH
+csv_file = DATA_CSV_PATH
 # dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
 # csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
 
@@ -157,6 +157,7 @@ def save_results(results_dict, model, fold_num, window, stride):
 
 def save_model(fold_num, window, stride):
     global model
-    torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2022_env_cnn_" + str(window) + "_" + str(stride) + "_" + str(fold_num) + ".pt")
+    # torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2022_env_cnn_" + str(window) + "_" + str(stride) + "_" + str(fold_num) + ".pt")
+    torch.save(model.state_dict(), "/Models/model_weights_2022_env_cnn_" + str(window) + "_" + str(stride) + "_" + str(fold_num) + ".pt")
 
 stratified_sample(csv_file, dataset_dir)

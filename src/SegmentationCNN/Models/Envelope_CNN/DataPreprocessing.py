@@ -1,19 +1,15 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
 
 from scipy.signal import butter, filtfilt, hilbert, spectrogram
 import statistics
 from librosa import resample 
 import numpy as np 
-import sys 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from SegmentationHMM import getDWT, schmidt_spike_removal
 
 
-
-
-
 class DataPreprocessing: 
-
 
     DOWNSAMPLE_FREQUENCY = 50 
 
@@ -28,7 +24,7 @@ class DataPreprocessing:
         self.set_envelopes()
         self.normalise_envelopes()
         self.create_envelope_signal()
-        
+
         
     def set_envelopes(self):
         filtered_signal = self.filter_signal(self.wav)
@@ -37,6 +33,7 @@ class DataPreprocessing:
         self.hilb_env = self.get_hilbert_envelope(spike_rem_signal)
         self.wave_env = self.get_wavelet_envelope(spike_rem_signal)
         self.power_spec_env = self.get_power_spectral_density_envelope(spike_rem_signal)
+
 
     def normalise_envelopes(self):
         self.homo_env = self.normalise_envelope(

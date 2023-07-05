@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import numpy as np 
 import pickle
 import torch 
@@ -6,11 +9,8 @@ import torch.nn.functional as F
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 
-import sys 
 import matplotlib.pyplot as plt 
 from sklearn.model_selection import StratifiedKFold
-
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
 from DataManipulation.PatientFrame import PatientFrame
@@ -18,8 +18,10 @@ from Combined_PatientInfo import *
 from SegmentationCNN.Models.STFT_CNN.STFT_GitHubUNet import STFT_UNet, init_weights
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
-csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
+dataset_dir = TRAINING_DATA_PATH
+csv_file = DATA_CSV_PATH
+# dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
+# csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
 
 
 epoch_count = 0 

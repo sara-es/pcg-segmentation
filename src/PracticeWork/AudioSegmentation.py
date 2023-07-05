@@ -1,4 +1,7 @@
-from constants import *
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
+
+from Utilities.constants import *
 import csv
 import glob
 import numpy as np 
@@ -9,13 +12,10 @@ import torch
 import torchaudio
 from torch.utils.data import Dataset
 from scipy.io import wavfile
-import array 
 
 os.chdir(TRAINING_DATA_PATH)
 
 class SegmentedAudio(Dataset):
-
-
 
     def __init__(self, file):
         patient_frame = prepare_frame(file)

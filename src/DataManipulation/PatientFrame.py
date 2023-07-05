@@ -1,9 +1,9 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
+
 import glob 
-import os 
 import pandas as pd
-import sys 
 import shutil
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 
 from Utilities.constants import * 
 
@@ -21,7 +21,7 @@ class PatientFrame():
 
     def get_patient_audio_file_names(self, patient_num):
         wav_files = [] 
-        file_regex = "training_data/" + str(patient_num) + '_*.wav'
+        file_regex = TRAINING_DATA_PATH + str(patient_num) + '_*.wav'
         for file in glob.glob(file_regex):
             wav_files.append(file)
         return sorted(wav_files)
@@ -45,9 +45,9 @@ class PatientFrame():
         return (self.patient_frame.loc[self.patient_frame['Patient ID'].isin(patientID)])["Murmur"]
 
     def create_dataset_dir_from_IDs(self):
-        dir = DATA_PATH + "DataSubset_" + str(len(self))
+        dir = TRAINING_DATA_PATH + "DataSubset_" + str(len(self))
         os.mkdir(dir)
         for id in self.patient_frame["Patient ID"]:
-            files = glob.glob(TRAINING_DATA_PATH_2022 + "training_data/" + str(id) + "_*")
+            files = glob.glob(TRAINING_DATA_PATH + str(id) + "_*")
             for f in files:
                 shutil.copy(f, dir)

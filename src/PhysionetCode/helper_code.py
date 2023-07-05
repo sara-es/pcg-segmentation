@@ -3,7 +3,7 @@
 # Do *not* edit this script.
 # These are helper functions that you can use with your code.
 
-import os, numpy as np, scipy as sp, scipy.io, scipy.io.wavfile
+import os, numpy as np, scipy as sp
 
 # Check if a variable is a number or represents a number.
 def is_number(x):

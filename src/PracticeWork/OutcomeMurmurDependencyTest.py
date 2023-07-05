@@ -1,6 +1,9 @@
-from DataPresentation import DataPresentation
-from FirstModel import PatientData
-from constants import * 
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
+
+from DataManipulation.DataPresentation import DataPresentation
+from PracticeWork.FirstModel import PatientData
+from Utilities.constants import * 
 from scipy.stats import chi2_contingency
 from scipy.stats import chi2
 import numpy as np 

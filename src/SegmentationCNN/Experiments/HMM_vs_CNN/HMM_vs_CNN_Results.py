@@ -1,9 +1,10 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import pickle 
 import numpy as np 
 import statistics 
-import sys 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from DataManipulation.DataPresentation import * 
 from Utilities.create_segmentation_array import *
 from Utilities.constants import *
@@ -12,7 +13,7 @@ from SegmentationCNN.Experiments.performance_metrics import *
 from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
 
 
-RESULTS_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Results/"
+RESULTS_PATH = "/Results/"
 
 WINDOW = 64
 STRIDE = 8
@@ -84,7 +85,7 @@ def get_accuracies():
 
             if cnn_accuracy <=0.5 and hmm_accuracy >=0.8:
                 print(file, cnn_accuracy, hmm_accuracy)
-                results_dir = "/Users/serenahuston/GitRepos/ThirdYearProject/DataPresentation/SegmentationModelPerformance/CNN_vs_HMM/"
+                results_dir = "/DataPresentation/SegmentationModelPerformance/CNN_vs_HMM/"
                 dp.plot_PCG_HMM_vs_CNN_segmentations(file.split(".")[0], results_dir, recording, true_segmentations, cnn_prediction-1, hmm_segs-1, clip=True)
     
 

@@ -1,11 +1,12 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 import torch.nn.functional as F 
-import sys 
 import pickle 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet
 from SegmentationCNN.Models.STFT_CNN.STFT_GitHubUNet import STFT_UNet
 from DataManipulation.PatientFrame import PatientFrame

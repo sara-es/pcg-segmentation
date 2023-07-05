@@ -1,16 +1,14 @@
-import scipy.io
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import pandas as pd
 import numpy as np 
-import os
 
 import numpy as np
-import scipy.io.wavfile
-import sys 
+from scipy.io import wavfile, loadmat
 from tqdm import tqdm
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
-
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 
 from CNNData import CNNData 
 from GitHubUNet import *
@@ -24,7 +22,7 @@ MAT_FILE_SAMPLE_RATE = 2000
 
 
 def get_df_from_mat(filename):
-    mat = scipy.io.loadmat(filename)
+    mat = loadmat(filename)
 
     mdata = mat['state_ans']
     # pqr=pd.Series(mdata)
@@ -62,7 +60,7 @@ def get_wavs_tsvs_2016(wav_dir, annotate_dir, return_names=False):
             segmentation_file = os.path.join(annotate_dir, root + "_StateAns.mat")
             if not os.path.exists(segmentation_file):
                 continue
-            fs, recording = scipy.io.wavfile.read(os.path.join(wav_dir, file_))
+            fs, recording = wavfile.read(os.path.join(wav_dir, file_))
             wav_arrays.append(recording)
             fs_arrays.append(fs)
             if return_names:
@@ -122,8 +120,10 @@ def set_up_model_2016():
     criterion = nn.CrossEntropyLoss()
 
 dir_extensions = ["a", "b", "c", "d", "e", "f"]
-wav_root = "/Users/serenahuston/GitRepos/Data/PhysioNet_2016/"
-annotate_root = "/Users/serenahuston/GitRepos/Data/annotations/hand_corrected/"
+# wav_root = "/Users/serenahuston/GitRepos/Data/PhysioNet_2016/"
+wav_root = "physionet.org/files/challenge-2016/1.0.0/"
+# annotate_root = "/Users/serenahuston/GitRepos/Data/annotations/hand_corrected/"
+annotate_root = "physionet.org/files/challenge-2016/1.0.0/annotations/hand_corrected/"
 
 dataset = get_data_for_CNN(wav_root, annotate_root, dir_extensions)
 train_loader = DataLoader(dataset=dataset, batch_size=1, shuffle=True)
@@ -133,4 +133,4 @@ set_up_model_2016()
 print("TRAINING")
 train_2016(train_loader, epochs=2)
 print("SAVING")
-torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2016_64_8.pt")
+torch.save(model.state_dict(), "src/SegmentationCNN/Models/model_weights_2016_64_8.pt")

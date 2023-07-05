@@ -1,14 +1,14 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..'))
+
 import numpy as np
-import sys 
-import os 
 import scipy as sp 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from DataManipulation.PatientFrame import PatientFrame
 from Utilities.constants import * 
 from Utilities.create_segmentation_array import * 
 
-CSV_FILE = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv" 
+CSV_FILE = DATA_CSV_PATH
 
 def calc_proportion_murmurs(files):
     pf = PatientFrame(CSV_FILE)
@@ -63,8 +63,8 @@ def calc_confusion_matrix(prediction, truth, fhs):
 
 def get_true_segmentations(file, return_recording=False):
     patientID = file.split(".")[0]
-    fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH_2022 + "training_data/", file))
-    tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + patientID + ".tsv", delimiter="\t")
+    fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH, file))
+    tsv = np.loadtxt(TRAINING_DATA_PATH + patientID + ".tsv", delimiter="\t")
     clipped_recording, segmentations = create_segmentation_array(recording,
                                                                     tsv,
                                                                     recording_frequency=4000,

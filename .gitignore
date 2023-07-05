@@ -1,0 +1,17 @@
+# Byte-compiled and DLL files (no notebooks!)
+*.ipynb
+.ipynb_checkpoints
+__pycache__/
+**/__pycache__/**
+*.py[cod]
+*.code-workspace
+.idea/
+.vscode/
+wget-log
+
+# folders, e.g. training data
+**/physionet.org
+test_scripts
+
+# saved models and weights
+*.pt

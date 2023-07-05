@@ -1,7 +1,9 @@
-from constants import *
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
+
+from Utilities.constants import *
 import glob
 import numpy as np 
-import os
 import pandas as pd
 import torch
 import torchaudio

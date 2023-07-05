@@ -1,6 +1,9 @@
-from AudioDataset import *
-from DataPresentation import DataPresentation
-from constants import * 
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
+
+from DataManipulation.AudioDataset import *
+from DataManipulation.DataPresentation import DataPresentation
+from Utilities.constants import * 
 import torch
 from torch.utils.data import DataLoader
 from MurmurPrediction import *

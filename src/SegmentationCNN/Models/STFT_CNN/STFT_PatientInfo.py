@@ -1,11 +1,10 @@
-import os 
-from tqdm import tqdm
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
 
+from tqdm import tqdm
 import scipy as sp
 import pandas as pd 
-import sys 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.create_segmentation_array import *
 from SegmentationCNN.Models.STFT_CNN.STFT_DataPreprocessing import *
 from SegmentationCNN.Models.STFT_CNN.STFT_CNN_Data import *

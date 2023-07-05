@@ -1,9 +1,10 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import pickle 
 import numpy as np 
 import statistics 
-import sys 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from DataManipulation.DataPresentation import * 
 from Utilities.create_segmentation_array import *
 from Utilities.constants import *
@@ -12,7 +13,7 @@ from SegmentationCNN.Experiments.performance_metrics import *
 from SegmentationCNN.Models.STFT_CNN.STFT_DataPreprocessing import * 
 
 
-RESULTS_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Results/STFT_64_8_Results_26_03_2023/"
+RESULTS_PATH = "/Results/STFT_64_8_Results_26_03_2023/"
 WINDOW = 64
 STRIDE = 8
 

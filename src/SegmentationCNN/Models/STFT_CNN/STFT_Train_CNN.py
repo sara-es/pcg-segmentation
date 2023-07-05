@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import numpy as np 
 import pickle
 import torch 
@@ -6,20 +9,20 @@ import torch.nn.functional as F
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 
-import sys 
 import matplotlib.pyplot as plt 
 from sklearn.model_selection import StratifiedKFold
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
 from DataManipulation.PatientFrame import PatientFrame
 from STFT_PatientInfo import * 
 from STFT_GitHubUNet import STFT_UNet, init_weights
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
-model_weights = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/stft_model_weights_2016_64_8_5_epoch.pt"
+# dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
+dataset_dir = TRAINING_DATA_PATH
+# csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+csv_file = DATA_CSV_PATH
+# model_weights = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/stft_model_weights_2016_64_8_5_epoch.pt"
 
 epoch_count = 0 
 
@@ -69,8 +72,6 @@ def train(train_loader, validation_loader, validation_size, epochs=15):
     avg_train_loss = []
     avg_validation_loss = [] 
 
-    
-
     accuracy_list = [] 
     model.train(True)
 
@@ -88,8 +89,6 @@ def train(train_loader, validation_loader, validation_size, epochs=15):
             training_loss.append(loss.item())
             loss.backward()
             optimiser.step()
-
-
 
         correct = 0 
         model.eval()
@@ -162,7 +161,7 @@ def save_epoch_stats(avg_validation_loss, avg_train_loss, accuracy_list, model, 
 
 def save_model(fold_num):
     global model
-    torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2022_stft_cnn_" + str(fold_num) + ".pt")
+    torch.save(model.state_dict(), "Models/model_weights_2022_stft_cnn_" + str(fold_num) + ".pt")
 
     
 

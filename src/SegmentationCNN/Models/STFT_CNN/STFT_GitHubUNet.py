@@ -1,11 +1,11 @@
 # SOURCE: https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_model.py
 
-import torch
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import torch.nn as nn
 import torch.nn.functional as F 
-import sys
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from SegmentationCNN.Models.STFT_CNN.STFT_CNN_Parts import * 
 
 

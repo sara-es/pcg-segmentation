@@ -1,15 +1,13 @@
-import sys 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
 
 from Utilities.constants import * 
 import matplotlib.pyplot as plt
 import numpy as np
 import math 
 import wave
-import os 
 import scipy as sp 
 from scipy.fft import fft
-from scipy import fftpack
 from scipy.signal import stft 
 
 import seaborn as sn
@@ -211,8 +209,8 @@ class DataPresentation:
         plt.savefig(data_pres_folder + "Loss VS Accuracy"  + str(fold_num))
 
     def plot_patient_fft(self, patient_ID):
-        fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH_2022 + "training_data/", patient_ID + ".wav"))
-        tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + patient_ID + ".tsv", delimiter="\t")
+        fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH, patient_ID + ".wav"))
+        tsv = np.loadtxt(TRAINING_DATA_PATH + patient_ID + ".tsv", delimiter="\t")
         clipped_recording, segmentations = create_segmentation_array(recording,
                                                                             tsv,
                                                                             recording_frequency=4000,
@@ -237,8 +235,8 @@ class DataPresentation:
         plt.savefig(DATA_PRESENTATION_PATH + "FFT_" + patient_ID)
 
     def plot_patient_stft(self, patient_ID):
-        fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH_2022 + "training_data/", patient_ID + ".wav"))
-        tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + patient_ID + ".tsv", delimiter="\t")
+        fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH, patient_ID + ".wav"))
+        tsv = np.loadtxt(TRAINING_DATA_PATH + patient_ID + ".tsv", delimiter="\t")
         clipped_recording, segmentations = create_segmentation_array(recording,
                                                                             tsv,
                                                                             recording_frequency=4000,
@@ -274,8 +272,8 @@ class DataPresentation:
 
 
     def plot_STFT_shorter_window(self, patient_ID):
-        fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH_2022 + "training_data/", patient_ID + ".wav"))
-        tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + patient_ID + ".tsv", delimiter="\t")
+        fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH, patient_ID + ".wav"))
+        tsv = np.loadtxt(TRAINING_DATA_PATH + patient_ID + ".tsv", delimiter="\t")
         clipped_recording, segmentations = create_segmentation_array(recording, tsv,
                                                                         recording_frequency=4000,
                                                                         feature_frequency=4000)
