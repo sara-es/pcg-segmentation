@@ -1,0 +1,16 @@
+wheel
+numpy
+pandas
+scipy
+scikit-learn
+torch
+torchvision
+torchaudio
+matplotlib
+seaborn
+joblib
+pydub
+tqdm
+librosa
+antropy
+PyWavelets

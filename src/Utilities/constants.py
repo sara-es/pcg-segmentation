@@ -14,17 +14,17 @@ MURMUR_PRESENCE = ["Present", "Absent", "Unknown"]
 OUTCOMES = ["Normal", "Abnormal"]
 NUM_FRAMES = 1000 
 # DATA_PATH = "/Users/serenahuston/GitRepos/Data/"
-TRAINING_DATA_PATH = "physionet.org/files/circor-heart-sound/1.0.3/training_data/"
-TINY_TEST_DATA_PATH = "physionet.org/files/circor-heart-sound/1.0.3/tiny_test" # for a small test set, 10 patients
-DATA_CSV_PATH = "physionet.org/files/circor-heart-sound/1.0.3/training_data.csv"
-TINY_TEST_CSV_PATH = "physionet.org/files/circor-heart-sound/1.0.3/tiny_test/tiny_test_data.csv" # for a small test set, 10 patients
+TRAINING_DATA_PATH = os.path.join("physionet.org","files","circor-heart-sound","1.0.3","training_data")
+TINY_TEST_DATA_PATH = os.path.join("physionet.org","files","circor-heart-sound","1.0.3","tiny_test")  # for a small test set, 10 patients
+DATA_CSV_PATH = os.path.join("physionet.org","files","circor-heart-sound","1.0.3","training_data.csv")
+TINY_TEST_CSV_PATH = os.path.join("physionet.org","files","circor-heart-sound","1.0.3","tiny_test","tiny_test_data.csv") # for a small test set, 10 patients
 # TRAINING_DATA_PATH_2022 = DATA_PATH + "PhysioNet_2022/"
 # DATA_PRESENTATION_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/DataPresentation/"
-DATA_PRESENTATION_PATH = "DataPresentation/"
+DATA_PRESENTATION_PATH = "DataPresentation"
 # RESULTS_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Results/"
-RESULTS_PATH = "src/SegmentationCNN/Results/"
+RESULTS_PATH = os.path.join("src","SegmentationCNN","Results")
 # MODEL_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/"
-MODEL_PATH = "src/SegmentationCNN/Models/"
+MODEL_PATH = os.path.join("src","SegmentationCNN","Models")
 
 def prepare_frame(file):
     patient_frame = pd.read_csv(file)
