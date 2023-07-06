@@ -12,22 +12,21 @@ from Utilities.prediction_helper_functions import *
 from SegmentationCNN.Experiments.performance_metrics import * 
 from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
 
-
-RESULTS_PATH = "/Results/"
 WINDOW = 64
 STRIDE = 8
 
 
 def get_model_results(model, fold):
-    if model == "env":
-        results_file = "HMM_vs_CNN_22_03_2023/cnn_results_22_03_23__" + str(fold)
+    if model == "cnn_env":
+        results_file = os.path.join(RESULTS_PATH, "cnn_results_22_03_23__" + str(fold))
+    elif model == "cnn_stft":
+        results_file = os.path.join(RESULTS_PATH, "stft_cnn_results_" + str(fold))
     elif model == "hmm":
-        results_file = "HMM_vs_CNN_22_03_2023/hmm_results_22_03_23__" + str(fold)
-    elif model == "stft":
-        results_file = "STFT_64_8_Results_26_03_2023/stft_cnn_results_" + str(fold)
-    with open(RESULTS_PATH + results_file, 'rb') as f:
+        results_file = os.path.join(RESULTS_PATH, "hmm_results_22_03_23__" + str(fold))
+    with open(os.path.join(RESULTS_PATH, results_file), 'rb') as f:
         results = pickle.load(f)
         return results 
+    
 
 def make_sample_prediction(file_results, new_length, window, stride):
     index_options = {key: [] for key in range(new_length)}
@@ -54,44 +53,43 @@ def make_sample_prediction(file_results, new_length, window, stride):
             prediction[key] = mode
     return prediction
 
+
 def get_upsampled_prediction(cnn_window_predictions, true_segmentations):
     cnn_downsample_prediction = make_sample_prediction(cnn_window_predictions, math.ceil(len(true_segmentations)/(4000/50)), WINDOW, STRIDE)
     cnn_prediction = upsample_states(cnn_downsample_prediction, 50, 4000, len(true_segmentations)) + 1 
     return cnn_prediction 
 
+
 def get_accuracies():
     cnn_us_accuracy_dict = {1: [], 2: [], 3 : [], 4 : [], 5: []}
     cnn_ds_accuracy_dict = {1: [], 2: [], 3 : [], 4 : [], 5: []}
     hmm_accuracy_dict = {1: [], 2: [], 3 : [], 4 : [], 5: []}
-    results_dict = {"env" : dict(), "stft" : dict(), "hmm": dict()}
-    prop_murmurs = {"env" : [], "stft" : [], "hmm": []}
+    results_dict = {"cnn" : dict(), "hmm" : dict()}
     dp = DataPresentation()
+
     for i in range(1, 6):
         for model in results_dict.keys():
             results_dict[model] = get_model_results(model, i)
 
-        for file in results_dict["env"].keys():
+        for file in results_dict["cnn"].keys():
             recording, true_segmentations = get_true_segmentations(file, return_recording=True)
-            env_prediction = get_upsampled_prediction(results_dict["env"][file], true_segmentations)
-            stft_prediction = get_upsampled_prediction(results_dict["stft"][file], true_segmentations)
-            hmm_prediction = results_dict["hmm"][file][0]
+            cnn_prediction = get_upsampled_prediction(results_dict["cnn"][file], true_segmentations)
+            
+            cnn_us_accuracy_dict[i].append((cnn_prediction == true_segmentations).sum() / len(cnn_prediction))
+            cnn_ds_accuracy_dict[i].extend([k[1] for k in results_dict["cnn"][file]])
+            hmm_accuracy_dict[i].append(results_dict["hmm"][file][1])
 
-            env_accuracy = (env_prediction == true_segmentations).sum() / len(env_prediction)
-            stft_accuracy = (stft_prediction == true_segmentations).sum() / len(stft_prediction)
+            cnn_accuracy = (cnn_prediction == true_segmentations).sum() / len(cnn_prediction)
             hmm_accuracy = results_dict["hmm"][file][1]
+            hmm_segs = results_dict["hmm"][file][0]
 
-            if env_accuracy > 0.8:
-                prop_murmurs["env"].append(file)
-            elif stft_accuracy > 0.8: 
-                prop_murmurs["stft"].append(file)
-            elif hmm_accuracy > 0.8: 
-                prop_murmurs["hmm"].append(file)
-    
-    for model in prop_murmurs.keys():
-        print(model)
-        calc_proportion_murmurs(prop_murmurs[model])
+            if cnn_accuracy <=0.5 and hmm_accuracy >=0.8:
+                print(file, cnn_accuracy, hmm_accuracy)
+                results_dir = "/DataPresentation/SegmentationModelPerformance/CNN_vs_HMM/"
+                dp.plot_PCG_HMM_vs_CNN_segmentations(file.split(".")[0], results_dir, recording, true_segmentations, cnn_prediction-1, hmm_segs-1, clip=True)
     
     return cnn_us_accuracy_dict, cnn_ds_accuracy_dict, hmm_accuracy_dict
+
 
 def print_accuracy_results(accuracy_dict): 
     overall_accuracies = []
@@ -101,6 +99,7 @@ def print_accuracy_results(accuracy_dict):
         print(np.mean(accuracies), np.std(accuracies))
     print("OVERALL:", np.mean(overall_accuracies))
     print("OVERALL:", np.std(overall_accuracies))
+
 
 def get_upsampled_confusion_matrices(model):
     totals = [0,0,0,0]
@@ -162,12 +161,14 @@ def get_downsampled_confusion_matrices(model):
 
     print(means, stds)
 
-# for model in ["cnn", "hmm"]:
-#     print("-----", model, "-----")
-#     get_confusion_matrices(model)
+print("----UPSAMPLED----")
+for model in ["cnn", "hmm"]:
+    print("-----", model, "-----")
+    get_upsampled_confusion_matrices(model)
 
-# get_downsampled_confusion_matrices("cnn")
-cnn_us_accuracy_dict, cnn_ds_accuracy_dict, hmm_accuracy_dict = get_accuracies()
+print("DOWNSAMPLED CNN")
+get_downsampled_confusion_matrices("cnn")
+# cnn_us_accuracy_dict, cnn_ds_accuracy_dict, hmm_accuracy_dict = get_accuracies()
 # print("-----CNN UPSAMPLED-----")
 # print_accuracy_results(cnn_us_accuracy_dict)
 # print("-----CNN DOWNSAMPLED-----")

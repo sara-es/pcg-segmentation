@@ -1,10 +1,12 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
 
 from sklearn.ensemble import IsolationForest
-from AudioDataset import AudioData
+from DataManipulation.AudioDataset import AudioData
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np 
-from constants import DATA_PRESENTATION_PATH
+from Utilities.constants import DATA_PRESENTATION_PATH
 import statistics
 
 

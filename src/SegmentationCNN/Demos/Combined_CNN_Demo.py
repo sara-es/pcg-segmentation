@@ -1,9 +1,9 @@
-import sys 
-import math 
-import os 
-import scipy as sp
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..'))
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
+import math 
+from scipy.io import wavfile
+
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import * 
 from SegmentationCNN.Models.STFT_CNN.STFT_GitHubUNet import * 
 from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
@@ -11,15 +11,15 @@ from SegmentationCNN.Models.STFT_CNN.STFT_DataPreprocessing import *
 from Utilities.create_segmentation_array import *
 from Utilities.prediction_helper_functions import * 
 from DataManipulation.DataPresentation import * 
+from Utilities.constants import *
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-model_path = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/Demos/Combined_CNN/"
-saved_env_model = model_path + "model_weights_2022_env_cnn_64_8_3.pt"
-saved_stft_model = model_path + "model_weights_2022_stft_cnn_3.pt"
-
+dataset_dir = TRAINING_DATA_PATH
+model_path = MODEL_PATH
+saved_env_model = os.path.join(model_path, "model_weights_2022_env_cnn_64_8_3.pt")
+saved_stft_model = os.path.join(model_path, "model_weights_2022_stft_cnn_3.pt")
 
 def get_wav_and_tsv(patient_name):
-    fs, recording = sp.io.wavfile.read(os.path.join(dataset_dir, patient_name + ".wav"))
+    fs, recording = wavfile.read(os.path.join(dataset_dir, patient_name + ".wav"))
     tsv = np.loadtxt(os.path.join(dataset_dir, patient_name+ ".tsv"), delimiter="\t")
 
     clipped_recording, segmentations = create_segmentation_array(recording,
@@ -63,7 +63,7 @@ def make_prediction(audio_data, fs, saved_env_model, saved_STFT_model, window=64
 # Get files not in folds of these models
 files = ["84996_TV", "50029_PV", "49653_MV"]
 data_pres = DataPresentation()
-results_dir = "/Users/serenahuston/GitRepos/ThirdYearProject/DataPresentation/SegmentationModelPerformance/Demos/Combined_CNN/"
+results_dir = os.path.join(RESULTS_PATH, "Combined_CNN")
 
 for file in files:
     wav, true_seg, fs = get_wav_and_tsv(file)

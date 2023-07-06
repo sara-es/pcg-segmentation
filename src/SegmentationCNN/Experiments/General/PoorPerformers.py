@@ -1,9 +1,10 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import pickle 
 import numpy as np 
 import statistics 
-import sys 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from DataManipulation.DataPresentation import * 
 from Utilities.create_segmentation_array import *
 from Utilities.constants import *
@@ -11,7 +12,7 @@ from Utilities.prediction_helper_functions import *
 from SegmentationCNN.Experiments.performance_metrics import * 
 
 
-RESULTS_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Results/CNN_Results_256_32_26_03_2023/"
+RESULTS_PATH = "/Results/CNN_Results_256_32_26_03_2023/"
 WINDOW = 256
 STRIDE = 32
 
@@ -71,7 +72,7 @@ def get_accuracies():
             cnn_ds_accuracy_dict[i].extend(accuracies)
             
             if file == "78592_TV.wav" or file == "50219_MV.wav":
-                results_dir = "/Users/serenahuston/GitRepos/ThirdYearProject/DataPresentation/SegmentationModelPerformance/"
+                results_dir = "/DataPresentation/SegmentationModelPerformance/"
                 dp.plot_PCG_segmentations(file.split(".")[0], results_dir, recording, true_segmentations-1, cnn_prediction-1, clip=False)
             
             audio_len += (len(recording)/4000)

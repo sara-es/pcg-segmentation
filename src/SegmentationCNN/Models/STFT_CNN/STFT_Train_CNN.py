@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import numpy as np 
 import pickle
 import torch 
@@ -6,20 +9,24 @@ import torch.nn.functional as F
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 
-import sys 
 import matplotlib.pyplot as plt 
 from sklearn.model_selection import StratifiedKFold
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
 from DataManipulation.PatientFrame import PatientFrame
 from STFT_PatientInfo import * 
 from STFT_GitHubUNet import STFT_UNet, init_weights
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
-model_weights = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/stft_model_weights_2016_64_8_5_epoch.pt"
+
+dataset_dir = TRAINING_DATA_PATH
+csv_file = DATA_CSV_PATH
+# dataset_dir = TINY_TEST_DATA_PATH
+# csv_file = TINY_TEST_CSV_PATH
+
+# dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
+# csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+# model_weights = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/stft_model_weights_2016_64_8_5_epoch.pt"
 
 epoch_count = 0 
 
@@ -31,25 +38,29 @@ def set_up_model():
     criterion = nn.CrossEntropyLoss()
 
 
-def stratified_sample(csv_file, dataset_dir, folds=10):
+def stratified_sample(csv_file, dataset_dir, folds=5):
+    print("Loading data and initializing trials...")
     pf = PatientFrame(csv_file)
-    print("RUNNING")
+    # print("RUNNING")
     patient_info = PatientInfo_STFT(dataset_dir, window=5120, stride=640)
     patient_info.get_data()
 
-    folds = 5
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1)
     fold_num = 1
     for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
+        print(f"#### FOLD {fold_num} ####")
         patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
         training_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_train)]
         val_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_test)]
-        cnn_results, avg_validation_loss, avg_train_loss, accuracy_list =prep_CNN(training_df, val_df)
+        print(f"Training CNN...")
+        cnn_results, avg_validation_loss, avg_train_loss, accuracy_list = prep_CNN(training_df, val_df)
+        print(f"Saving results...")
         save_results(cnn_results, "stft_cnn_", fold_num)
         save_epoch_stats(avg_validation_loss, avg_train_loss, accuracy_list, "stft_cnn", fold_num)
+        print(f"Saving model...")
         save_model(fold_num)
         fold_num += 1 
-        break
+        # break
 
 
 def prep_CNN(training_df, val_df):
@@ -69,8 +80,6 @@ def train(train_loader, validation_loader, validation_size, epochs=15):
     avg_train_loss = []
     avg_validation_loss = [] 
 
-    
-
     accuracy_list = [] 
     model.train(True)
 
@@ -88,8 +97,6 @@ def train(train_loader, validation_loader, validation_size, epochs=15):
             training_loss.append(loss.item())
             loss.backward()
             optimiser.step()
-
-
 
         correct = 0 
         model.eval()
@@ -124,7 +131,7 @@ def train(train_loader, validation_loader, validation_size, epochs=15):
         avg_validation_loss.append(np.average(validation_loss))
 
 
-    print("HERE")
+    # print("HERE")
     return results, avg_validation_loss, avg_train_loss, accuracy_list
         
 
@@ -162,7 +169,7 @@ def save_epoch_stats(avg_validation_loss, avg_train_loss, accuracy_list, model, 
 
 def save_model(fold_num):
     global model
-    torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2022_stft_cnn_" + str(fold_num) + ".pt")
+    torch.save(model.state_dict(), os.path.join(MODEL_PATH, "model_weights_2022_stft_cnn_" + str(fold_num) + ".pt"))
 
     
 

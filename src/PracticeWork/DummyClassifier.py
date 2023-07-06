@@ -1,9 +1,13 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
+
 import numpy as np
-from sklearn.dummy import DummyClassifier
-from DataPresentation import DataPresentation
-from FirstModel import PatientData
-from FirstModel import split_data
 import matplotlib.pyplot as plt
+from sklearn.dummy import DummyClassifier
+from DataManipulation.DataPresentation import DataPresentation
+from PracticeWork.FirstModel import PatientData
+from PracticeWork.FirstModel import split_data
+
 
 STRATEGIES = ["most_frequent", "stratified", "uniform"]
 

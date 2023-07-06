@@ -1,23 +1,29 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 import torch.nn.functional as F 
-import sys 
 import pickle 
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet
 from SegmentationCNN.Models.STFT_CNN.STFT_GitHubUNet import STFT_UNet
 from DataManipulation.PatientFrame import PatientFrame
 from SegmentationCNN.Models.Combined_CNN.Combined_PatientInfo import *
+from Utilities.constants import * 
 
 stft_model = None
 env_model = None
 
-MODEL_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/Ensemble_Weights/"
-RESULTS_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Results/Ensemble_Results/Combined/"
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+MODEL_PATH = "/Models/Ensemble_Weights/"
+RESULTS_PATH = "/Results/Ensemble_Results/Combined/"
+# MODEL_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Models/Ensemble_Weights/"
+# RESULTS_PATH = "/Users/serenahuston/GitRepos/ThirdYearProject/Results/Ensemble_Results/Combined/"
+dataset_dir = TRAINING_DATA_PATH
+csv_file = DATA_CSV_PATH
+# dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
+# csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
 
 def load_model(model, fold):
     global stft_model, env_model 

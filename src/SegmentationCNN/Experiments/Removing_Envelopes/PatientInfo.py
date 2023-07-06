@@ -1,13 +1,11 @@
-import os 
-from tqdm import tqdm
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
 
 from DataPreprocessing import DataPreprocessing
 
 import scipy as sp
 import pandas as pd 
-import sys
-
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
+from tqdm import tqdm
 from Utilities.create_segmentation_array import *
 from SegmentationCNN.Models.Envelope_CNN.CNNData import * 
 from Envelope_Enum import *

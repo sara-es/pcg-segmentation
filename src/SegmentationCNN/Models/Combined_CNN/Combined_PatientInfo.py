@@ -1,12 +1,10 @@
-import os 
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 from tqdm import tqdm
-
-
-import scipy as sp
+from scipy.io import wavfile
 import pandas as pd 
-import sys
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.create_segmentation_array import *
 from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
 from SegmentationCNN.Models.Envelope_CNN.CNNData import * 
@@ -44,7 +42,7 @@ class Combined_PatientInfo:
 
                              
     def update_info_dict_entry(self, root, wav_file, segmentation_file):
-        fs, recording = sp.io.wavfile.read(os.path.join(self.dataset_dir, wav_file))
+        fs, recording = wavfile.read(os.path.join(self.dataset_dir, wav_file))
         tsv = np.loadtxt(segmentation_file, delimiter="\t")
 
         

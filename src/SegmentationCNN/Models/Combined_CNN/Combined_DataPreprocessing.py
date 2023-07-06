@@ -1,12 +1,11 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
 
 from scipy.signal import butter, filtfilt, hilbert, spectrogram
 import statistics
 from librosa import resample 
 import numpy as np 
 from scipy.signal import stft
-import sys 
-
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from SegmentationHMM import getDWT, schmidt_spike_removal
 
 

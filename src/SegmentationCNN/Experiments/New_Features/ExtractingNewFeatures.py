@@ -1,15 +1,7 @@
-from scipy.signal import stft
 import scipy as sp 
 import os 
 import numpy as np 
-import sys
-import matplotlib.pyplot as plt 
-from antropy import entropy
-from librosa.feature import mfcc
-from librosa import resample
 
-
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities import constants
 from SegmentationCNN import STFT_DataPreprocessing
 from Utilities.create_segmentation_array import *

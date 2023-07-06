@@ -1,18 +1,15 @@
-import sys 
-
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
 
 from Utilities.constants import *
 
 import glob
-import numpy as np
 import os 
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data import random_split
 import torchaudio
-import math 
 
 
 os.chdir(TRAINING_DATA_PATH)
@@ -42,7 +39,7 @@ class PatientData(Dataset):
 
     def get_patient_audio_file_names(self, patient_num):
         wav_files = [] 
-        file_regex = "training_data/" + str(patient_num) + '_*.wav'
+        file_regex = TRAINING_DATA_PATH + str(patient_num) + '_*.wav'
         for file in glob.glob(file_regex):
             wav_files.append(file)
         return sorted(wav_files)

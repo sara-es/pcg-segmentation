@@ -1,4 +1,7 @@
-import scipy.io
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..', '..'))
+
+from scipy.io import loadmat
 import pandas as pd
 import numpy as np 
 import os
@@ -10,12 +13,10 @@ from tqdm import tqdm
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
-
-from SegmentationCNN.Models.STFT_CNN.STFT_CNN_Data import STFT_CNN_Data 
-from SegmentationCNN.Models.STFT_CNN.STFT_GitHubUNet import *
-from Utilities.create_segmentation_array import create_segmentation_array
-from SegmentationCNN.Models.STFT_CNN.STFT_DataPreprocessing import STFT_DataPreprocessing
+from src.SegmentationCNN.Models.STFT_CNN.STFT_CNN_Data import STFT_CNN_Data 
+from src.SegmentationCNN.Models.STFT_CNN.STFT_GitHubUNet import *
+from src.Utilities.create_segmentation_array import create_segmentation_array
+from src.SegmentationCNN.Models.STFT_CNN.STFT_DataPreprocessing import STFT_DataPreprocessing
 import re 
 
 
@@ -23,7 +24,7 @@ MAT_FILE_SAMPLE_RATE = 2000
 
 
 def get_df_from_mat(filename):
-    mat = scipy.io.loadmat(filename)
+    mat = loadmat(filename)
 
     mdata = mat['state_ans']
     # pqr=pd.Series(mdata)
@@ -120,8 +121,10 @@ def set_up_model_2016():
     criterion = nn.CrossEntropyLoss()
 
 dir_extensions = ["a", "b", "c", "d", "e", "f"]
-wav_root = "/Users/serenahuston/GitRepos/Data/PhysioNet_2016/"
-annotate_root = "/Users/serenahuston/GitRepos/Data/annotations/hand_corrected/"
+# wav_root = "/Users/serenahuston/GitRepos/Data/PhysioNet_2016/"
+wav_root = "physionet.org/files/challenge-2016/1.0.0/"
+# annotate_root = "/Users/serenahuston/GitRepos/Data/annotations/hand_corrected/"
+annotate_root = "physionet.org/files/challenge-2016/1.0.0/annotations/hand_corrected/"
 
 dataset = get_data_for_CNN(wav_root, annotate_root, dir_extensions)
 train_loader = DataLoader(dataset=dataset, batch_size=50, shuffle=True)
@@ -131,4 +134,4 @@ set_up_model_2016()
 print("TRAINING")
 train_2016(train_loader, epochs=5)
 print("SAVING")
-torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/stft_model_weights_2016_64_8_5_epoch.pt")
+torch.save(model.state_dict(), "src/SegmentationCNN/Models/stft_model_weights_2016_64_8_5_epoch.pt")

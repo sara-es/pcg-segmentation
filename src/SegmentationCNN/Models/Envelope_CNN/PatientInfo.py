@@ -1,12 +1,10 @@
-import os 
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 from tqdm import tqdm
-
-
 import scipy as sp
 import pandas as pd 
-import sys
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.create_segmentation_array import *
 from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
 from SegmentationCNN.Models.Envelope_CNN.CNNData import * 
@@ -61,7 +59,7 @@ class PatientInfo:
                 self.info_dict["ID"].append(int(root.split("_")[0]))
                 return True
             else:
-                print("HERE")
+                print("either recording or tsv segmentation is len 0")
                 return False
         
 

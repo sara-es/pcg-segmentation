@@ -1,12 +1,10 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..'))
+
 import statistics
 import numpy as np 
-import sys 
 import scipy as sp 
-import os 
 
-
-
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities import constants
 from Utilities.create_segmentation_array import create_segmentation_array
 from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import DataPreprocessing
@@ -98,8 +96,8 @@ def make_sample_prediction(patches, new_length):
 
 def get_true_segmentations(file):
     patientID = file.split(".")[0]
-    fs, recording = sp.io.wavfile.read(os.path.join(constants.TRAINING_DATA_PATH_2022 + "training_data/", file))
-    tsv = np.loadtxt(constants.TRAINING_DATA_PATH_2022 + "training_data/" + patientID + ".tsv", delimiter="\t")
+    fs, recording = sp.io.wavfile.read(os.path.join(constants.TRAINING_DATA_PATH, file))
+    tsv = np.loadtxt(constants.TRAINING_DATA_PATH + patientID + ".tsv", delimiter="\t")
     clipped_recording, segmentations = create_segmentation_array(recording,
                                                                     tsv,
                                                                     recording_frequency=4000,

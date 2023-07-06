@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import numpy as np 
 import pickle
 import torch 
@@ -12,19 +15,20 @@ from sklearn.model_selection import StratifiedKFold
 from EarlyStopping import EarlyStopping
 from tqdm.contrib import tzip
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
 from DataManipulation.PatientFrame import PatientFrame
 from DataManipulation.DataPresentation import DataPresentation
 
-from GitHubUNet import UNet
+from GitHubUNet import UNet, init_weights
 
 from SegmentationHMM import train_segmentation, run_segmentation
 from PatientInfo import * 
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+dataset_dir = TRAINING_DATA_PATH
+csv_file = DATA_CSV_PATH
+# dataset_dir = TINY_TEST_DATA_PATH
+# csv_file = TINY_TEST_CSV_PATH
 
 # dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
 # csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
@@ -32,34 +36,38 @@ csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
 epoch_count = 0 
 
 data_pres = DataPresentation()
-data_pres_folder = DATA_PRESENTATION_PATH + "/CNN_vs_HMM_Full_Data_22_03_2023/"
+data_pres_folder = DATA_PRESENTATION_PATH + "CNN_vs_HMM_Full_Data_22_03_2023/"
 fold_num = 1 
 
 def set_up_model():
     global model, optimiser, criterion 
     model = UNet()
     # model.apply(init_weights)
-    model.load_state_dict(torch.load(MODEL_PATH + "model_weights_2016.pt"))
+    model.load_state_dict(torch.load(MODEL_PATH + "model_weights_2016.pt")) # No such file or directory: '/Models/model_weights_2016.pt'
     optimiser = torch.optim.Adam(model.parameters(), lr=0.0001)
     criterion = nn.CrossEntropyLoss()
 
 
-def stratified_sample(csv_file, dataset_dir, folds=10):
+def stratified_sample(csv_file, dataset_dir, folds=5):
+    print("Loading data and initializing trials...")
     global fold_num 
     pf = PatientFrame(csv_file)
-    print("RUNNING")
+    # print("RUNNING")
     patient_info = PatientInfo(dataset_dir)
     patient_info.get_data()
 
-    folds = 5
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1)
     
     for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
+        print(f"#### FOLD {fold_num} ####")
         patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
         training_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_train)]
         val_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_test)]
+        print(f"Training HMM...")
         hmm_results = train_eval_HMM(training_df, val_df)
+        print(f"Training CNN...")
         cnn_results =prep_CNN(training_df, val_df)
+        print(f"Saving results...")
         save_results(hmm_results, "hmm", fold_num)
         save_results(cnn_results, "cnn", fold_num)
         fold_num += 1 

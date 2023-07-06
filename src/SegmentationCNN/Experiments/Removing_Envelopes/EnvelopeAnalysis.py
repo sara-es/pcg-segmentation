@@ -1,11 +1,9 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
 
-
-import os 
 import scipy as sp 
 import numpy as np
-import sys
 
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from Utilities.create_segmentation_array import * 
 from SegmentationCNN.Models.Envelope_CNN.DataPreprocessing import * 
@@ -14,8 +12,8 @@ from DataManipulation.DataPresentation import *
 patient = "36327_AV"
 
 
-fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH_2022 + "training_data/", patient + ".wav"))
-tsv = np.loadtxt(TRAINING_DATA_PATH_2022 + "training_data/" + patient + ".tsv", delimiter="\t")
+fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH, patient + ".wav"))
+tsv = np.loadtxt(TRAINING_DATA_PATH + patient + ".tsv", delimiter="\t")
 clipped_recording, segmentations = create_segmentation_array(recording,
                                                                     tsv,
                                                                     recording_frequency=4000,

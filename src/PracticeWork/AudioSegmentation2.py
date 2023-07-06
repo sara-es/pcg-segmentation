@@ -1,16 +1,19 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
+
 from DataPresentation import DataPresentation
 from PhysionetCode import helper_code
-from constants import *
+from Utilities.constants import *
 import numpy as np 
 import os
 import pandas as pd
 from scipy.io import wavfile
-from PatientFrame import PatientFrame
+from DataManipulation.PatientFrame import PatientFrame
 from matplotlib import pyplot as plt
 
 os.chdir(TRAINING_DATA_PATH)
 
-pf = PatientFrame(TRAINING_DATA_PATH + "training_data.csv")
+pf = PatientFrame(os.path.join(TRAINING_DATA_PATH, "training_data.csv"))
 
 def load_tsv_files_for_patient_location(patient_ID, location):
     tsv_file_path = TRAINING_DATA_PATH + "/training_data/" + patient_ID + "_" + location + ".tsv"

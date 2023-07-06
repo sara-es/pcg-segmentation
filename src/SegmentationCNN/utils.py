@@ -1,13 +1,11 @@
-import os
-import sys
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..'))
 
 import numpy as np
 import scipy.io.wavfile
 from tqdm import tqdm
 import re 
-from create_segmentation_array import *
-from DataPreprocessing import DataPreprocessing
-from CNNData import CNNData
+from Utilities.create_segmentation_array import *
 
 
 def get_wavs_and_tsvs(input_folder=None, return_names=False):
