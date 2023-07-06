@@ -11,6 +11,8 @@ wget-log
 
 # folders, e.g. training data
 **/physionet.org
+**/Results
+DataPresentation
 test_scripts
 
 # saved models and weights

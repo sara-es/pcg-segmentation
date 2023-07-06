@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.join(sys.path[0], '..', '..', '..'))
+
 import numpy as np 
 import pickle
 import torch 
@@ -6,11 +9,8 @@ import torch.nn.functional as F
 from torch.utils.data import ConcatDataset
 from torch.utils.data import DataLoader
 
-import sys 
 from sklearn.model_selection import StratifiedKFold
 
-
-sys.path.append("/Users/serenahuston/GitRepos/ThirdYearProject/src/")
 from Utilities.constants import * 
 from DataManipulation.PatientFrame import * 
 from DataManipulation.PatientFrame import PatientFrame
@@ -19,8 +19,10 @@ from DataManipulation.DataPresentation import DataPresentation
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet, init_weights
 from SegmentationCNN.Models.Envelope_CNN.PatientInfo import * 
 
-dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
-csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
+dataset_dir = TRAINING_DATA_PATH
+csv_file = DATA_CSV_PATH
+# dataset_dir = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data"
+# csv_file = "/Users/serenahuston/GitRepos/Data/PhysioNet_2022/training_data.csv"
 
 data_pres = DataPresentation()
 fold_num = 1
@@ -35,9 +37,10 @@ def set_up_model():
 
 
 def stratified_sample(csv_file, dataset_dir, folds=5):
+    print("Loading data and initializing trials...")
     global fold_num, data_pres_folder
     pf = PatientFrame(csv_file)
-    print("RUNNING")
+    # print("RUNNING")
     patient_info = PatientInfo(dataset_dir)
     patient_info.get_data()
 
@@ -48,10 +51,13 @@ def stratified_sample(csv_file, dataset_dir, folds=5):
     data_pres_folder = DATA_PRESENTATION_PATH + "results_30_03_2023_64_8_env_CNN_for_ensemble/"
     fold_num = 1
     for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
+        print(f"#### FOLD {fold_num} ####")
         patients_train, patients_test = pf.patient_frame["Patient ID"][train_index], pf.patient_frame["Patient ID"][test_index]
         training_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_train)]
         val_df = patient_info.patient_df.loc[patient_info.patient_df['ID'].isin(patients_test)]
-        cnn_results =prep_CNN(training_df, val_df  )
+        print(f"Training CNN...")
+        cnn_results = prep_CNN(training_df, val_df  )
+        print(f"Saving results...")
         save_results(cnn_results, "env_cnn_for_ensemble_64_8", fold_num)
         save_model(fold_num)
         fold_num += 1 
@@ -67,8 +73,8 @@ def prep_CNN(training_df, val_df):
     validation_loader = DataLoader(dataset=validation_data, batch_size=1, shuffle=True)
 
     set_up_model()
-    return train(train_loader, validation_loader, len(validation_data))        
-
+    return train(train_loader, validation_loader, len(validation_data)) 
+       
 def train(train_loader, validation_loader, validation_size, epochs=15, patience=5):
     global fold_num, data_pres, data_pres_folder
     
@@ -121,7 +127,7 @@ def train(train_loader, validation_loader, validation_size, epochs=15, patience=
         avg_train_loss.append(np.average(training_loss))
         avg_validation_loss.append(np.average(validation_loss))
 
-    print("HERE")
+    # print("HERE")
     data_pres.plot_loss_and_accuracy(avg_train_loss, avg_validation_loss, accuracy_list, data_pres_folder, fold_num)
     return results 
         
@@ -134,6 +140,6 @@ def save_results(results_dict, model, fold_num):
 
 def save_model(fold_num):
     global model
-    torch.save(model.state_dict(), "/Users/serenahuston/GitRepos/ThirdYearProject/Models/model_weights_2022_env_cnn_for_ensemble_64_8_" + str(fold_num) + ".pt")
+    torch.save(model.state_dict(), os.path.join(MODEL_PATH, "model_weights_2022_env_cnn_for_ensemble_64_8_", str(fold_num), ".pt"))
 
 stratified_sample(csv_file, dataset_dir)

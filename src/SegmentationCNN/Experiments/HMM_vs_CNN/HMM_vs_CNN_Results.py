@@ -29,7 +29,6 @@ def get_model_results(model, fold):
         return results 
     
 
-
 def make_sample_prediction(file_results, new_length, window, stride):
     index_options = {key: [] for key in range(new_length)}
     sorted_windows = sorted(file_results,key=lambda l:l[2])
@@ -55,10 +54,12 @@ def make_sample_prediction(file_results, new_length, window, stride):
             prediction[key] = mode
     return prediction
 
+
 def get_upsampled_prediction(cnn_window_predictions, true_segmentations):
     cnn_downsample_prediction = make_sample_prediction(cnn_window_predictions, math.ceil(len(true_segmentations)/(4000/50)), WINDOW, STRIDE)
     cnn_prediction = upsample_states(cnn_downsample_prediction, 50, 4000, len(true_segmentations)) + 1 
     return cnn_prediction 
+
 
 def get_accuracies():
     cnn_us_accuracy_dict = {1: [], 2: [], 3 : [], 4 : [], 5: []}
@@ -88,9 +89,8 @@ def get_accuracies():
                 results_dir = "/DataPresentation/SegmentationModelPerformance/CNN_vs_HMM/"
                 dp.plot_PCG_HMM_vs_CNN_segmentations(file.split(".")[0], results_dir, recording, true_segmentations, cnn_prediction-1, hmm_segs-1, clip=True)
     
-
-
     return cnn_us_accuracy_dict, cnn_ds_accuracy_dict, hmm_accuracy_dict
+
 
 def print_accuracy_results(accuracy_dict): 
     overall_accuracies = []
@@ -100,6 +100,7 @@ def print_accuracy_results(accuracy_dict):
         print(np.mean(accuracies), np.std(accuracies))
     print("OVERALL:", np.mean(overall_accuracies))
     print("OVERALL:", np.std(overall_accuracies))
+
 
 def get_upsampled_confusion_matrices(model):
     totals = [0,0,0,0]

@@ -59,7 +59,7 @@ class PatientInfo:
                 self.info_dict["ID"].append(int(root.split("_")[0]))
                 return True
             else:
-                print("HERE")
+                print("either recording or tsv segmentation is len 0")
                 return False
         
 

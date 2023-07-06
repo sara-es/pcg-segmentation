@@ -206,6 +206,8 @@ class DataPresentation:
         ax2.grid()
         ax3.grid()
 
+        if not os.path.exists(data_pres_folder):
+            os.makedirs(data_pres_folder)
         plt.savefig(data_pres_folder + "Loss VS Accuracy"  + str(fold_num))
 
     def plot_patient_fft(self, patient_ID):

@@ -18,8 +18,8 @@ from Combined_PatientInfo import *
 from SegmentationCNN.Models.STFT_CNN.STFT_GitHubUNet import STFT_UNet, init_weights
 from SegmentationCNN.Models.Envelope_CNN.GitHubUNet import UNet
 
-dataset_dir = TRAINING_DATA_PATH
-csv_file = DATA_CSV_PATH
+dataset_dir = TINY_TEST_DATA_PATH #TRAINING_DATA_PATH
+csv_file = TINY_TEST_CSV_PATH #DATA_CSV_PATH
 # dataset_dir = "/Users/serenahuston/GitRepos/Data/DataSubset_21_Patients"
 # csv_file = "/Users/serenahuston/GitRepos/Data/training_data_subset_21.csv"
 
@@ -36,18 +36,18 @@ def set_up_STFT_model():
 def set_up_env_model():
     global env_model, env_optimiser, env_criterion 
     env_model = UNet()
-    env_model.load_state_dict(torch.load(MODEL_PATH + "model_weights_2016.pt"))
+    env_model.load_state_dict(torch.load(MODEL_PATH + "model_weights_2016_64_8.pt"))
+    # env_model.apply(init_weights)
     env_optimiser = torch.optim.Adam(env_model.parameters(), lr=0.0001)
     env_criterion = nn.CrossEntropyLoss()
 
 
-def stratified_sample(csv_file, dataset_dir, folds=10):
+def stratified_sample(csv_file, dataset_dir, folds=5):
     pf = PatientFrame(csv_file)
     print("RUNNING")
     patient_info = Combined_PatientInfo(dataset_dir)
     patient_info.get_data()
 
-    folds = 5
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1)
     fold_num = 1
     for train_index, test_index in skf.split(pf.patient_frame["Patient ID"], pf.patient_frame["Murmur"]):
