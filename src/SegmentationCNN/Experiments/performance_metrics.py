@@ -64,7 +64,7 @@ def calc_confusion_matrix(prediction, truth, fhs):
 def get_true_segmentations(file, return_recording=False):
     patientID = file.split(".")[0]
     fs, recording = sp.io.wavfile.read(os.path.join(TRAINING_DATA_PATH, file))
-    tsv = np.loadtxt(TRAINING_DATA_PATH + patientID + ".tsv", delimiter="\t")
+    tsv = np.loadtxt(os.path.join(TRAINING_DATA_PATH, patientID + ".tsv"), delimiter="\t")
     clipped_recording, segmentations = create_segmentation_array(recording,
                                                                     tsv,
                                                                     recording_frequency=4000,

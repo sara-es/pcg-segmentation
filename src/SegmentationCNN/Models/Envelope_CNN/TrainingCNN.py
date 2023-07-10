@@ -75,7 +75,6 @@ def stratified_sample(csv_file, dataset_dir, folds=5):
 
 def prep_CNN(training_df, val_df):
     train_data = ConcatDataset(training_df["CNN_Data"])
-
     validation_data = ConcatDataset(val_df["CNN_Data"])
   
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=True)
@@ -163,7 +162,7 @@ def train(train_loader, validation_loader, validation_size, epochs=15, patience=
             print("Early stopping")
             break
 
-    print("HERE")
+    # print("HERE")
     data_pres.plot_loss_and_accuracy(avg_train_loss, avg_validation_loss, accuracy_list, data_pres_folder, fold_num)
     return results 
         
