@@ -17,3 +17,6 @@ test_scripts
 
 # saved models and weights
 *.pt
+
+# graphs
+*.png
