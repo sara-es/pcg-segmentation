@@ -59,8 +59,8 @@ def get_peak_limits(peaks, a=1, b=1):
     Ts = Ts[Ts>5] #ignore any super short peaks
     Ts_mean = np.mean(Ts)
     Ts_std = np.std(Ts)
-    high_limit = Ts_mean + a*Ts_std
-    low_limit = Ts_mean - b*Ts_std
+    high_limit = Ts_mean + a*Ts_std # to see if there are gaps/missing peaks
+    low_limit = Ts_mean - b*Ts_std # to reject peaks too close together (in addition to 50ms 'largest splotted normal sound interval')
     return high_limit, low_limit
 
 def reject_peaks(peaks, energies, low_limit, fs=100, e_thresh = 0.8):
